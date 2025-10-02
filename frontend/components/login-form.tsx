@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,41 +10,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 
+// ⬇️ Hook de auth via React Query (ajuste o caminho se necessário)
+import { useLogin } from "@/hooks/useAuth"
+
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
+  const { mutateAsync: login, isPending } = useLogin()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError("")
 
-    // Simulate authentication
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock authentication - in real app, validate credentials
-      if (email && password) {
-        // Store user session (in real app, use proper auth)
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            email,
-            name: email.split("@")[0],
-            role: "Gestor", // Mock role
-          }),
-        )
-        router.push("/dashboard")
-      } else {
-        setError("Por favor, preencha todos os campos")
-      }
-    } catch (err) {
-      setError("Erro ao fazer login. Tente novamente.")
-    } finally {
-      setIsLoading(false)
+      // chama /auth/login na API; o hook já salva token e usuário no localStorage
+      await login({ email, password })
+      router.replace("/dashboard")
+    } catch (err: any) {
+      const msg =
+        err?.response?.status === 401
+          ? "Credenciais inválidas."
+          : "Erro ao fazer login. Tente novamente."
+      setError(msg)
     }
   }
 
@@ -53,7 +42,9 @@ export function LoginForm() {
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-semibold text-slate-800">Entrar</CardTitle>
-        <CardDescription className="text-slate-600">Acesse sua conta para gerenciar demandas</CardDescription>
+        <CardDescription className="text-slate-600">
+          Acesse sua conta para gerenciar demandas
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -92,8 +83,12 @@ export function LoginForm() {
             </Alert>
           )}
 
-          <Button type="submit" className="w-full bg-[#04A4A1] hover:bg-[#038a87] text-white" disabled={isLoading}>
-            {isLoading ? (
+          <Button
+            type="submit"
+            className="w-full bg-[#04A4A1] hover:bg-[#038a87] text-white"
+            disabled={isPending}
+          >
+            {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Entrando...

@@ -1,37 +1,41 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { User, LogOut, Settings } from "lucide-react"
+} from "@/components/ui/dropdown-menu";
+import { User, LogOut, Settings } from "lucide-react";
+import { PERMS } from "@/hooks/useAuthGuard";
 
 export function DashboardHeader() {
-  const [user, setUser] = useState<any>(null)
-  const router = useRouter()
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
-    } else {
-      router.push("/")
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem("auth_user"); // 🔧 chave correta
+    if (raw) {
+      setUser(JSON.parse(raw));
     }
-  }, [router])
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/")
-  }
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    router.replace("/");
+  };
 
-  if (!user) return null
+  if (!user) return null;
+
+  const canUsers =
+    (user.permissions & PERMS.GerenciarUsuarios) === PERMS.GerenciarUsuarios;
 
   return (
     <header className="bg-white border-b border-slate-200 shadow-sm">
@@ -40,21 +44,35 @@ export function DashboardHeader() {
           <div className="w-8 h-8 bg-[#04A4A1] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">CD</span>
           </div>
-          <h1 className="text-xl font-semibold text-slate-800">Controle de Demandas</h1>
+          <h1 className="text-xl font-semibold text-slate-800">
+            Controle de Demandas
+          </h1>
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="/dashboard" className="text-slate-600 hover:text-[#04A4A1] font-medium">
+          <a
+            href="/dashboard"
+            className="text-slate-600 hover:text-[#04A4A1] font-medium"
+          >
             Dashboard
           </a>
-          <a href="/demandas" className="text-slate-600 hover:text-[#04A4A1] font-medium">
+          <a
+            href="/demandas"
+            className="text-slate-600 hover:text-[#04A4A1] font-medium"
+          >
             Demandas
           </a>
-          <a href="/consultar" className="text-slate-600 hover:text-[#04A4A1] font-medium">
+          <a
+            href="/consultar"
+            className="text-slate-600 hover:text-[#04A4A1] font-medium"
+          >
             Consultar Protocolo
           </a>
-          {user.role === "Admin" && (
-            <a href="/usuarios" className="text-slate-600 hover:text-[#04A4A1] font-medium">
+          {canUsers && (
+            <a
+              href="/usuarios"
+              className="text-slate-600 hover:text-[#04A4A1] font-medium"
+            >
               Usuários
             </a>
           )}
@@ -74,8 +92,12 @@ export function DashboardHeader() {
             <div className="flex items-center justify-start gap-2 p-2">
               <div className="flex flex-col space-y-1 leading-none">
                 <p className="font-medium">{user.name}</p>
-                <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email}</p>
-                <p className="text-xs text-[#04A4A1] font-medium">{user.role}</p>
+                <p className="w-[200px] truncate text-sm text-muted-foreground">
+                  {user.email}
+                </p>
+                <p className="text-xs text-[#04A4A1] font-medium">
+                  {user.role}
+                </p>
               </div>
             </div>
             <DropdownMenuSeparator />
@@ -96,5 +118,5 @@ export function DashboardHeader() {
         </DropdownMenu>
       </div>
     </header>
-  )
+  );
 }

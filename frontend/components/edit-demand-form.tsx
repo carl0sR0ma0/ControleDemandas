@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,20 +19,54 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Upload, X, CheckCircle, FileText, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// ⬇️ hooks React Query da integração
+import {
+  useDemandDetail,
+  useUpdateDemand,
+  useUploadAttachments,
+} from "@/hooks/useDemands";
 
 interface EditDemandFormProps {
-  protocol: string;
+  protocol: string; // ← usamos como 'id' da demanda
   currentUserId?: string;
 }
 
-export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps) {
+export function EditDemandForm({
+  protocol,
+  currentUserId,
+}: EditDemandFormProps) {
   const router = useRouter();
+
+  // ⬇️ carrega dados da demanda
+  const { data, isLoading } = useDemandDetail(protocol);
+  const update = useUpdateDemand(protocol);
+  const upload = useUploadAttachments(protocol);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [attachments, setAttachments] = useState<File[]>([]);
 
+  // Mock: combos dependentes (mantive seu exemplo)
+  const systemsData: Record<string, { modules: string[]; versions: string[] }> =
+    {
+      PGDI: {
+        modules: ["PAP", "Ocorrências", "Online", "RTA"],
+        versions: ["2.38.0", "2.38.1"],
+      },
+      PCP: {
+        modules: ["Relatórios", "Planejamento", "Configurações", "Premissas"],
+        versions: ["2.38.1", "2.39.0"],
+      },
+    };
+  const clientsMock = ["Cliente A", "Cliente B", "Cliente C"];
+
+  // estado do form inicializado a partir do detalhe
   const [formData, setFormData] = useState({
     description: "",
     module: "",
@@ -48,102 +81,55 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
     observation: "",
   });
 
-  // Mocked models for cascading selects (Sistema -> Módulo/Versão) and Clientes
-  const systemsData: Record<string, { modules: string[]; versions: string[] }> = {
-    PGDI: {
-      modules: ["PAP", "Ocorrências", "Online", "RTA"],
-      versions: ["2.38.0", "2.38.1"],
-    },
-    PCP: {
-      modules: ["Relatórios", "Planejamento", "Configurações", "Premissas"],
-      versions: ["2.38.1", "2.39.0"],
-    },
-  };
-  const clientsMock = [
-    "Cliente A",
-    "Cliente B",
-    "Cliente C",
-  ];
-
-  // Load demand data when component mounts
+  // quando o detalhe chegar, preenche o form
   useEffect(() => {
-    const loadDemandData = async () => {
-      setIsLoading(true);
-      try {
-        // Mock API call - in real app, fetch from API based on protocol
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (!data) return;
+    setFormData((prev) => ({
+      ...prev,
+      description: data.description ?? "",
+      module: data.module ?? "",
+      responsible: data.nextActionResponsible ?? currentUserId ?? "",
+      area: data.reporterArea ?? "",
+      system: data.productModule ?? "", // ajuste se no backend vier outro campo p/ sistema
+      type: String(data.occurrenceType ?? "") || "",
+      classification: String(data.classification ?? "") || "",
+      client: data.client ?? "",
+      version: data.systemVersion ?? "",
+      document: data.documentUrl ?? "",
+      observation: data.observation ?? "",
+    }));
+  }, [data, currentUserId]);
 
-        // Mock data - replace with actual API call
-        const mockDemandData = {
-          protocol: protocol,
-          date: "2025-01-15",
-          type: "Bug",
-          area: "Tecnologia",
-          system: "PGDI",
-          module: "Indicadores",
-          client: "Interno",
-          classification: "Urgente",
-          status: "Execução",
-          responsible: "João Silva",
-          estimatedDate: "2025-01-20",
-          document: "https://exemplo.com/documento.pdf",
-          description:
-            "O sistema de peso dos indicadores do PGDI não está funcionando corretamente. Quando o usuário tenta alterar o peso de um indicador, o sistema não salva as alterações e retorna um erro 500. Este problema está afetando a geração dos relatórios mensais.",
-          attachments: ["screenshot-erro.png", "log-sistema.txt"],
-          version: "2.1.0",
-          observation: "Problema identificado após a última atualização do sistema.",
-        };
-
-        // Update form data with loaded demand data
-        setFormData({
-          description: mockDemandData.description,
-          module: mockDemandData.module,
-          responsible: mockDemandData.responsible,
-          area: mockDemandData.area,
-          system: mockDemandData.system,
-          type: mockDemandData.type,
-          classification: mockDemandData.classification,
-          client: mockDemandData.client,
-          version: mockDemandData.version,
-          document: mockDemandData.document || "",
-          observation: mockDemandData.observation || "",
-        });
-      } catch (error) {
-        console.error("Erro ao carregar dados da demanda:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadDemandData();
-  }, [protocol]);
-
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setAttachments((prev) => [...prev, ...newFiles]);
-    }
+    if (e.target.files)
+      setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
   };
-
-  const removeAttachment = (index: number) => {
+  const removeAttachment = (index: number) =>
     setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Simulate API call for update
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // ⬇️ mapeia para o que a API aceita hoje (UpdateDemandDto)
+      await update.mutateAsync({
+        observation: formData.observation || undefined,
+        documentUrl: formData.document || undefined,
+        // nextActionResponsible / estimatedDelivery / order -> inclua se quiser expor esses campos
+      });
+
+      if (attachments.length > 0) {
+        await upload.mutateAsync(attachments);
+        setAttachments([]);
+      }
 
       setIsSubmitted(true);
-    } catch (error) {
-      console.error("Erro ao atualizar demanda:", error);
+    } catch (err) {
+      console.error("Erro ao atualizar demanda:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -179,7 +165,8 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
           </div>
           <Alert>
             <AlertDescription>
-              As informações da demanda #{protocol} foram atualizadas.
+              As informações da demanda #{data?.protocol ?? protocol} foram
+              atualizadas.
             </AlertDescription>
           </Alert>
           <div className="flex gap-4 justify-center">
@@ -206,16 +193,14 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
     >
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">
-          Editar Demanda #{protocol}
+          Editar Demanda #{data?.protocol ?? protocol}
         </h2>
         <p className="text-slate-600">
           Atualize as informações da demanda conforme necessário
         </p>
       </div>
 
-      <div
-        className="grid grid-cols-12 gap-4"
-      >
+      <div className="grid grid-cols-12 gap-4">
         {/* Tipo */}
         <div className="space-y-3 col-span-12">
           <Label className="text-slate-700">
@@ -227,48 +212,21 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             required
             className="grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Incremental" id="incremental" />
-              <Label htmlFor="incremental" className="flex items-center gap-1">
-                Incremental
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    implementação de algo novo ou evolução
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Melhoria" id="melhoria" />
-              <Label htmlFor="melhoria" className="flex items-center gap-1">
-                Melhoria
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    pequeno ajuste de algo já existente
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Bug" id="bug" />
-              <Label htmlFor="bug" className="flex items-center gap-1">
-                Bug
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    falha/erro que impede o funcionamento correto
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
+            <RadioOption
+              value="Incremental"
+              label="Incremental"
+              hint="implementação de algo novo ou evolução"
+            />
+            <RadioOption
+              value="Melhoria"
+              label="Melhoria"
+              hint="pequeno ajuste de algo já existente"
+            />
+            <RadioOption
+              value="Bug"
+              label="Bug"
+              hint="falha/erro que impede o funcionamento correto"
+            />
           </RadioGroup>
         </div>
 
@@ -279,10 +237,14 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
           </Label>
           <Select
             value={formData.system}
-            onValueChange={(value) => {
-              // Reset dependents when changing Sistema
-              setFormData((prev) => ({ ...prev, system: value, module: "", version: "" }));
-            }}
+            onValueChange={(value) =>
+              setFormData((p) => ({
+                ...p,
+                system: value,
+                module: "",
+                version: "",
+              }))
+            }
             required
           >
             <SelectTrigger className="w-full">
@@ -290,13 +252,15 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             </SelectTrigger>
             <SelectContent>
               {Object.keys(systemsData).map((sys) => (
-                <SelectItem key={sys} value={sys}>{sys}</SelectItem>
+                <SelectItem key={sys} value={sys}>
+                  {sys}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Módulo (dependente de Sistema) */}
+        {/* Módulo */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">
             Módulo <span className="text-red-500">*</span>
@@ -308,17 +272,28 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             required
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={formData.system ? "Selecione o módulo" : "Selecione primeiro o sistema"} />
+              <SelectValue
+                placeholder={
+                  formData.system
+                    ? "Selecione o módulo"
+                    : "Selecione primeiro o sistema"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system ? systemsData[formData.system].modules : []).map((mod) => (
-                <SelectItem key={mod} value={mod}>{mod}</SelectItem>
+              {(formData.system
+                ? systemsData[formData.system].modules
+                : []
+              ).map((mod) => (
+                <SelectItem key={mod} value={mod}>
+                  {mod}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Versão (dependente de Sistema) */}
+        {/* Versão */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">Versão do Sistema</Label>
           <Select
@@ -328,11 +303,22 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             required
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={formData.system ? "Selecione a versão" : "Selecione primeiro o sistema"} />
+              <SelectValue
+                placeholder={
+                  formData.system
+                    ? "Selecione a versão"
+                    : "Selecione primeiro o sistema"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system ? systemsData[formData.system].versions : []).map((ver) => (
-                <SelectItem key={ver} value={ver}>{ver}</SelectItem>
+              {(formData.system
+                ? systemsData[formData.system].versions
+                : []
+              ).map((ver) => (
+                <SelectItem key={ver} value={ver}>
+                  {ver}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -360,7 +346,7 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
           </Select>
         </div>
 
-        {/* Cliente (selecionável) */}
+        {/* Cliente */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">Cliente</Label>
           <Select
@@ -372,7 +358,9 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             </SelectTrigger>
             <SelectContent>
               {clientsMock.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -391,48 +379,21 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
             required
             className="grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Urgente" id="urgente" />
-              <Label htmlFor="urgente" className="flex items-center gap-1">
-                <Badge variant="destructive">Urgente</Badge>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Indisponibilidade de sistema (impacto crítico imediato)
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Médio" id="medio" />
-              <Label htmlFor="medio" className="flex items-center gap-1">
-                <Badge className="bg-yellow-500">Médio</Badge>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Falhas que impactam mas não bloqueiam o uso
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="Baixo" id="baixo" />
-              <Label htmlFor="baixo" className="flex items-center gap-1">
-                <Badge variant="secondary">Baixo</Badge>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Solicitações de melhoria ou ajustes
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-            </div>
+            <ClassRadio
+              value="Urgente"
+              badge={<Badge variant="destructive">Urgente</Badge>}
+              hint="Indisponibilidade de sistema (impacto crítico imediato)"
+            />
+            <ClassRadio
+              value="Médio"
+              badge={<Badge className="bg-yellow-500">Médio</Badge>}
+              hint="Falhas que impactam mas não bloqueiam o uso"
+            />
+            <ClassRadio
+              value="Baixo"
+              badge={<Badge variant="secondary">Baixo</Badge>}
+              hint="Solicitações de melhoria ou ajustes"
+            />
           </RadioGroup>
         </div>
 
@@ -534,10 +495,12 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
         <div className="flex gap-4 w-full justify-end">
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || update.isPending || upload.isPending}
             className="bg-[#04A4A1] hover:bg-[#038a87] text-white"
           >
-            {isSubmitting ? "Salvando..." : "Atualizar Demanda"}
+            {isSubmitting || update.isPending || upload.isPending
+              ? "Salvando..."
+              : "Atualizar Demanda"}
           </Button>
           <Button
             type="button"
@@ -549,5 +512,56 @@ export function EditDemandForm({ protocol, currentUserId }: EditDemandFormProps)
         </div>
       </div>
     </form>
+  );
+}
+
+/* --- helpers visuais --- */
+function RadioOption({
+  value,
+  label,
+  hint,
+}: {
+  value: string;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <RadioGroupItem value={value} id={value} />
+      <Label htmlFor={value} className="flex items-center gap-1">
+        {label}
+        <Tooltip>
+          <TooltipTrigger>
+            <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+          </TooltipTrigger>
+          <TooltipContent side="top">{hint}</TooltipContent>
+        </Tooltip>
+      </Label>
+    </div>
+  );
+}
+
+function ClassRadio({
+  value,
+  badge,
+  hint,
+}: {
+  value: string;
+  badge: React.ReactNode;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <RadioGroupItem value={value} id={`class-${value}`} />
+      <Label htmlFor={`class-${value}`} className="flex items-center gap-1">
+        {badge}
+        <Tooltip>
+          <TooltipTrigger>
+            <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+          </TooltipTrigger>
+          <TooltipContent side="top">{hint}</TooltipContent>
+        </Tooltip>
+      </Label>
+    </div>
   );
 }

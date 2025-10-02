@@ -1,0 +1,31 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/Api/Dockerfile
+    image: controle-demandas-api:latest
+    container_name: demandas_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - ./storage:/app/storage
+    env_file: 
+      - ./.env
+  db:
+    image: postgres:16
+    container_name: demandas_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-controle_demandas}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

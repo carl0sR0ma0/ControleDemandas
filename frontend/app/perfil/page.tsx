@@ -1,66 +1,86 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Save, Camera, Key } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Save, Camera, Key } from "lucide-react";
+import { PERMS, useAuthGuard } from "@/hooks/useAuthGuard";
+
+type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  permissions: number;
+  phone?: string;
+  department?: string;
+};
 
 export default function PerfilPage() {
-  const [user, setUser] = useState<any>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  // 🔒 exige pelo menos visualizar demandas (ajuste a permissão desejada)
+  useAuthGuard(PERMS.VisualizarDemandas);
+
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     department: "",
-  })
-  const router = useRouter()
+  });
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      const parsedUser = JSON.parse(userData)
-      setUser(parsedUser)
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem("auth_user"); // ✅ chave correta
+    if (raw) {
+      const parsed = JSON.parse(raw) as UserProfile;
+      setUser(parsed);
       setFormData({
-        name: parsedUser.name || "",
-        email: parsedUser.email || "",
-        phone: parsedUser.phone || "",
-        department: parsedUser.department || "",
-      })
-    } else {
-      router.push("/")
+        name: parsed.name ?? "",
+        email: parsed.email ?? "",
+        phone: parsed.phone ?? "",
+        department: parsed.department ?? "",
+      });
     }
-  }, [router])
+  }, []);
 
   const handleSave = () => {
-    const updatedUser = { ...user, ...formData }
-    localStorage.setItem("user", JSON.stringify(updatedUser))
-    setUser(updatedUser)
-    setIsEditing(false)
-  }
+    if (!user) return;
+    const updated: UserProfile = { ...user, ...formData };
+    localStorage.setItem("auth_user", JSON.stringify(updated)); // ✅ persiste
+    setUser(updated);
+    setIsEditing(false);
+  };
 
   const getRoleColor = (role: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       Admin: "bg-red-100 text-red-800",
       Gestor: "bg-blue-100 text-blue-800",
       Colaborador: "bg-green-100 text-green-800",
-    }
-    return colors[role as keyof typeof colors] || "bg-gray-100 text-gray-800"
-  }
+    };
+    return colors[role] ?? "bg-gray-100 text-gray-800";
+  };
 
-  if (!user) return null
+  if (!user) return null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-800">Meu Perfil</h1>
-        <p className="text-slate-600 mt-1">Gerencie suas informações pessoais e configurações de conta</p>
+        <p className="text-slate-600 mt-1">
+          Gerencie suas informações pessoais e configurações de conta
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -76,6 +96,7 @@ export default function PerfilPage() {
                 </Avatar>
                 <Button
                   size="sm"
+                  type="button"
                   className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-[#04A4A1] hover:bg-[#038a87]"
                 >
                   <Camera className="h-4 w-4" />
@@ -107,7 +128,9 @@ export default function PerfilPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Informações Pessoais</CardTitle>
-                <CardDescription>Atualize suas informações de perfil</CardDescription>
+                <CardDescription>
+                  Atualize suas informações de perfil
+                </CardDescription>
               </div>
               <Button
                 variant={isEditing ? "default" : "outline"}
@@ -132,7 +155,9 @@ export default function PerfilPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -142,7 +167,9 @@ export default function PerfilPage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -151,7 +178,9 @@ export default function PerfilPage() {
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="(11) 99999-9999"
                 />
@@ -161,7 +190,9 @@ export default function PerfilPage() {
                 <Input
                   id="department"
                   value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, department: e.target.value })
+                  }
                   disabled={!isEditing}
                   placeholder="Ex: Tecnologia"
                 />
@@ -174,7 +205,9 @@ export default function PerfilPage() {
         <Card className="border-0 shadow-sm lg:col-span-3">
           <CardHeader>
             <CardTitle>Segurança</CardTitle>
-            <CardDescription>Gerencie suas configurações de segurança</CardDescription>
+            <CardDescription>
+              Gerencie suas configurações de segurança
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -184,14 +217,18 @@ export default function PerfilPage() {
                 </div>
                 <div>
                   <p className="font-medium">Alterar Senha</p>
-                  <p className="text-sm text-slate-600">Última alteração há 3 meses</p>
+                  <p className="text-sm text-slate-600">
+                    Última alteração há 3 meses
+                  </p>
                 </div>
               </div>
-              <Button variant="outline">Alterar</Button>
+              <Button variant="outline" type="button">
+                Alterar
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
