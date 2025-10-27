@@ -57,11 +57,8 @@ export interface DemandDetail extends DemandListItem {
   observation?: string | null;
   requesterResponsible: string;
   unit: string;
-  priority?: string | null;
   systemVersion?: string | null;
-  reporter?: string | null;
   productModule?: string | null;
-  order?: number | null;
   attachments: Attachment[];
   history: StatusHistory[];
 }

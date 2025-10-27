@@ -1,19 +1,16 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Trash2, Plus, Settings } from "lucide-react"
 import {
   getAreas, createArea, updateArea, deleteArea,
-  getClients, createClient, updateClient, deleteClient,
   getUnits, createUnit, updateUnit, deleteUnit,
-  getStatuses, createStatus, updateStatus, deleteStatus,
   getSystems, createSystem, updateSystem, deleteSystem,
   getVersions, createVersion, updateVersion, deleteVersion,
   getModules, createModule, updateModule, deleteModule,
@@ -25,9 +22,7 @@ export function FormConfigs() {
   const qc = useQueryClient()
 
   const areas = useQuery({ queryKey: ["cfg","areas"], queryFn: getAreas })
-  const clients = useQuery({ queryKey: ["cfg","clients"], queryFn: getClients })
   const units = useQuery({ queryKey: ["cfg","units"], queryFn: getUnits })
-  const statuses = useQuery({ queryKey: ["cfg","statuses"], queryFn: getStatuses })
   const systems = useQuery({ queryKey: ["cfg","systems"], queryFn: getSystems })
   const [selectedSystem, setSelectedSystem] = useState<string>("")
   const versions = useQuery({ queryKey: ["cfg","versions", selectedSystem], queryFn: ()=> selectedSystem ? getVersions(selectedSystem) : Promise.resolve([]), enabled: !!selectedSystem })
@@ -48,18 +43,14 @@ export function FormConfigs() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="areas" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="areas">Áreas</TabsTrigger>
-            <TabsTrigger value="clientes">Clientes</TabsTrigger>
             <TabsTrigger value="unidades">Unidades</TabsTrigger>
-            <TabsTrigger value="status">Status</TabsTrigger>
             <TabsTrigger value="sistemas">Sistemas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="areas"><SimpleList title="Áreas" qk={["cfg","areas"]} items={areas.data||[]} onCreate={createArea} onUpdate={updateArea} onDelete={deleteArea} /></TabsContent>
-          <TabsContent value="clientes"><SimpleList title="Clientes" qk={["cfg","clients"]} items={clients.data||[]} onCreate={createClient} onUpdate={updateClient} onDelete={deleteClient} /></TabsContent>
           <TabsContent value="unidades"><SimpleList title="Unidades" qk={["cfg","units"]} items={units.data||[]} onCreate={createUnit} onUpdate={updateUnit} onDelete={deleteUnit} /></TabsContent>
-          <TabsContent value="status"><SimpleList title="Status" qk={["cfg","statuses"]} items={statuses.data||[]} onCreate={createStatus} onUpdate={updateStatus} onDelete={deleteStatus} /></TabsContent>
           <TabsContent value="sistemas">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-1">

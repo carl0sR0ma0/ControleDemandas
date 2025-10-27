@@ -110,13 +110,29 @@ public static class UserManagementEndpoints
             var exists = await db.Users.AnyAsync(u => u.Id == id);
             if (!exists) return Results.NotFound();
             var current = await db.UserPermissions.Where(x => x.UserId == id).ToListAsync();
-            db.UserPermissions.RemoveRange(current);
-            if (dto.PermissionCodes?.Length > 0)
+            var requestedCodes = dto.PermissionCodes ?? Array.Empty<string>();
+            var targetPermissions = await db.Permissions.Where(p => requestedCodes.Contains(p.Code)).ToListAsync();
+            var targetIds = targetPermissions.Select(p => p.Id).ToHashSet();
+            var existingIds = current.Select(up => up.PermissionId).ToHashSet();
+
+            foreach (var up in current)
             {
-                var perms = await db.Permissions.Where(p => dto.PermissionCodes.Contains(p.Code)).ToListAsync();
-                foreach (var p in perms)
-                    db.UserPermissions.Add(new UserPermission { UserId = id, PermissionId = p.Id, Granted = true });
+                up.Granted = targetIds.Contains(up.PermissionId);
             }
+
+            foreach (var perm in targetPermissions)
+            {
+                if (!existingIds.Contains(perm.Id))
+                {
+                    db.UserPermissions.Add(new UserPermission
+                    {
+                        UserId = id,
+                        PermissionId = perm.Id,
+                        Granted = true
+                    });
+                }
+            }
+
             await db.SaveChangesAsync();
             // Atualiza IsSpecial baseado no perfil atual
             var u = await db.Users.FindAsync(id);

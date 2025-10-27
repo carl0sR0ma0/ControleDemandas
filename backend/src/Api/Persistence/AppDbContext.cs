@@ -15,9 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Profile> Profiles => Set<Profile>();
     public DbSet<ProfilePermission> ProfilePermissions => Set<ProfilePermission>();
     public DbSet<Area> Areas => Set<Area>();
-    public DbSet<Client> Clients => Set<Client>();
     public DbSet<Unit> Units => Set<Unit>();
-    public DbSet<StatusConfig> Statuses => Set<StatusConfig>();
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<SystemVersion> SystemVersions => Set<SystemVersion>();
     public DbSet<ModuleEntity> Modules => Set<ModuleEntity>();
@@ -31,6 +29,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         b.Entity<Demand>().HasMany(d => d.Attachments).WithOne(a => a.Demand).HasForeignKey(a => a.DemandId);
         b.Entity<Demand>().HasMany(d => d.History).WithOne(h => h.Demand).HasForeignKey(h => h.DemandId);
+        b.Entity<Demand>()
+            .HasOne(d => d.Module).WithMany().HasForeignKey(d => d.ModuleId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Demand>()
+            .HasOne(d => d.RequesterUser).WithMany().HasForeignKey(d => d.RequesterUserId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Demand>()
+            .HasOne(d => d.ReporterArea).WithMany().HasForeignKey(d => d.ReporterAreaId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Demand>()
+            .HasOne(d => d.Unit).WithMany().HasForeignKey(d => d.UnitId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Demand>()
+            .HasOne(d => d.SystemVersion).WithMany().HasForeignKey(d => d.SystemVersionId).OnDelete(DeleteBehavior.SetNull);
 
         // Map Permissions
         b.Entity<PermissionEntity>().HasIndex(x => x.Code).IsUnique();
@@ -64,9 +72,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // Config maps
         b.Entity<Area>().HasIndex(x => x.Name).IsUnique();
-        b.Entity<Client>().HasIndex(x => x.Name).IsUnique();
         b.Entity<Unit>().HasIndex(x => x.Name).IsUnique();
-        b.Entity<StatusConfig>().HasIndex(x => x.Name).IsUnique();
         b.Entity<SystemEntity>().HasIndex(x => x.Name).IsUnique();
         b.Entity<SystemVersion>().HasIndex(x => new { x.SystemEntityId, x.Version }).IsUnique();
         b.Entity<ModuleEntity>().HasIndex(x => new { x.SystemEntityId, x.Name }).IsUnique();

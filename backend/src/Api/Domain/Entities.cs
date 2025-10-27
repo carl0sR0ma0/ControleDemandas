@@ -30,23 +30,24 @@ public class Demand
     public string Description { get; set; } = default!;
     public string? Observation { get; set; }
 
-    [MaxLength(120)] public string Module { get; set; } = default!;
-    [MaxLength(120)] public string RequesterResponsible { get; set; } = default!;
-    [MaxLength(60)]  public string ReporterArea { get; set; } = default!;
+    public Guid ModuleId { get; set; }
+    public ModuleEntity Module { get; set; } = default!;
+    public Guid RequesterUserId { get; set; }
+    public User RequesterUser { get; set; } = default!;
+    public Guid ReporterAreaId { get; set; }
+    public Area ReporterArea { get; set; } = default!;
     public OccurrenceType OccurrenceType { get; set; }
-    [MaxLength(120)] public string Unit { get; set; } = default!;
+    public Guid UnitId { get; set; }
+    public Unit Unit { get; set; } = default!;
     public Classification Classification { get; set; }
 
-    [MaxLength(120)] public string? Client { get; set; }
-    [MaxLength(30)]  public string? Priority { get; set; }
-    [MaxLength(30)]  public string? SystemVersion { get; set; }
-    [MaxLength(120)] public string? Reporter { get; set; }
-    [MaxLength(120)] public string? ProductModule { get; set; }
+    [MaxLength(120)] public string? Responsible { get; set; }
+    public Guid? SystemVersionId { get; set; }
+    public SystemVersion? SystemVersion { get; set; }
     public DemandStatus Status { get; set; } = DemandStatus.Ranqueado;
     [MaxLength(120)] public string? NextActionResponsible { get; set; }
     public DateTime? EstimatedDelivery { get; set; }
     public string? DocumentUrl { get; set; }
-    public int? Order { get; set; }
 
     public List<Attachment> Attachments { get; set; } = [];
     public List<StatusHistory> History { get; set; } = [];
@@ -131,21 +132,7 @@ public class Area
     public bool Active { get; set; } = true;
 }
 
-public class Client
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    [MaxLength(160)] public string Name { get; set; } = default!;
-    public bool Active { get; set; } = true;
-}
-
 public class Unit
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    [MaxLength(120)] public string Name { get; set; } = default!;
-    public bool Active { get; set; } = true;
-}
-
-public class StatusConfig
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     [MaxLength(120)] public string Name { get; set; } = default!;

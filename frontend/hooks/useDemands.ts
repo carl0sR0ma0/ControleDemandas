@@ -24,9 +24,12 @@ export interface DemandListFilters {
   size?: number;
   q?: string;
   status?: DemandStatus;
-  area?: string;
-  modulo?: string;
-  cliente?: string;
+  reporterAreaId?: string;
+  moduleId?: string;
+  unitId?: string;
+  requesterUserId?: string;
+  systemVersionId?: string;
+  responsavel?: string;
   tipo?: OccurrenceType;
   classificacao?: Classification;
   from?: string;
@@ -57,19 +60,15 @@ export function useDemandDetail(id?: string) {
 export interface CreateDemandDto {
   description: string;
   observation?: string;
-  module: string;
-  requesterResponsible: string;
-  reporterArea: string;
+  moduleId: string;
+  requesterUserId: string;
+  reporterAreaId: string;
   occurrenceType: OccurrenceType;
-  unit: string;
+  unitId: string;
   classification: Classification;
-  client?: string;
-  priority?: string;
-  systemVersion?: string;
-  reporter?: string;
-  productModule?: string;
+  responsible?: string;
+  systemVersionId?: string;
   documentUrl?: string;
-  order?: number;
   reporterEmail?: string;
 }
 
@@ -90,7 +89,6 @@ export interface UpdateDemandDto {
   nextActionResponsible?: string;
   estimatedDelivery?: string;
   documentUrl?: string;
-  order?: number;
 }
 
 export function useUpdateDemand(id: string) {

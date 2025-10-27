@@ -2,10 +2,7 @@ import { http } from "@/lib/http";
 
 export type SimpleItem = { id: string; name: string; active: boolean };
 export type Area = SimpleItem;
-export type Client = SimpleItem;
 export type Unit = SimpleItem;
-export type StatusConfig = SimpleItem;
-
 export type SystemEntity = { id: string; name: string; active: boolean };
 export type SystemVersion = { id: string; version: string; active: boolean };
 export type ModuleEntity = { id: string; name: string; active: boolean };
@@ -15,20 +12,10 @@ export const createArea = async (name: string, active = true) => (await http.pos
 export const updateArea = async (id: string, payload: Partial<Pick<Area, 'name'|'active'>>) => { await http.put(`/configs/areas/${id}`, payload); };
 export const deleteArea = async (id: string) => { await http.delete(`/configs/areas/${id}`); };
 
-export const getClients = async () => (await http.get<Client[]>("/configs/clients")).data;
-export const createClient = async (name: string, active = true) => (await http.post<{id:string}>("/configs/clients", { name, active })).data;
-export const updateClient = async (id: string, payload: Partial<Pick<Client, 'name'|'active'>>) => { await http.put(`/configs/clients/${id}`, payload); };
-export const deleteClient = async (id: string) => { await http.delete(`/configs/clients/${id}`); };
-
 export const getUnits = async () => (await http.get<Unit[]>("/configs/units")).data;
 export const createUnit = async (name: string, active = true) => (await http.post<{id:string}>("/configs/units", { name, active })).data;
 export const updateUnit = async (id: string, payload: Partial<Pick<Unit, 'name'|'active'>>) => { await http.put(`/configs/units/${id}`, payload); };
 export const deleteUnit = async (id: string) => { await http.delete(`/configs/units/${id}`); };
-
-export const getStatuses = async () => (await http.get<StatusConfig[]>("/configs/statuses")).data;
-export const createStatus = async (name: string, active = true) => (await http.post<{id:string}>("/configs/statuses", { name, active })).data;
-export const updateStatus = async (id: string, payload: Partial<Pick<StatusConfig, 'name'|'active'>>) => { await http.put(`/configs/statuses/${id}`, payload); };
-export const deleteStatus = async (id: string) => { await http.delete(`/configs/statuses/${id}`); };
 
 export const getSystems = async () => (await http.get<SystemEntity[]>("/configs/systems")).data;
 export const createSystem = async (name: string, active = true) => (await http.post<{id:string}>("/configs/systems", { name, active })).data;

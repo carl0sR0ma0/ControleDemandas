@@ -3,6 +3,7 @@ using System;
 using Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027175142_UpdateDemandRelations")]
+    partial class UpdateDemandRelations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,10 +117,21 @@ namespace Api.Migrations
                     b.Property<DateTime>("OpenedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Priority")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("Protocol")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Reporter")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<Guid>("ReporterAreaId")
                         .HasColumnType("uuid");
@@ -490,11 +504,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 612, DateTimeKind.Utc).AddTicks(4682),
+                            CreatedAt = new DateTime(2025, 10, 27, 17, 51, 41, 555, DateTimeKind.Utc).AddTicks(2275),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$5HYvi8YdzgAGGEE6spaUKOVQBtN7YsQCmv5rmNYNReexh2eKDZBUS",
+                            PasswordHash = "$2a$11$G7m916CT7hqrYNliCfEGvuNS37q/DCgFu8Rml5BOcXT3.VrTqsHfO",
                             ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
                             Role = "Admin"
                         },
@@ -502,11 +516,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 721, DateTimeKind.Utc).AddTicks(7538),
+                            CreatedAt = new DateTime(2025, 10, 27, 17, 51, 41, 685, DateTimeKind.Utc).AddTicks(3354),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$SkQHAtSRAx/XyHSGtzKEeep8IFTdAqNvj3NvMdzoBQ3xY9IodPO/S",
+                            PasswordHash = "$2a$11$Km6tYFEGm.e6/CVmLngg1uyLustxA33OmRQ25/ARPQ4UtK7dEz3cS",
                             ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
                             Role = "Gestor"
                         });

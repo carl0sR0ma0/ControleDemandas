@@ -24,14 +24,14 @@ import {
   useDemandasPorStatus,
   useDemandasPorArea,
   useDemandasPorModulo,
-  useDemandasPorCliente,
+  useDemandasPorResponsavel,
 } from "@/hooks/useDashboard";
 
 export function DashboardCharts() {
   const { data: byStatus } = useDemandasPorStatus();
   const { data: byArea } = useDemandasPorArea();
   const { data: byModulo } = useDemandasPorModulo();
-  const { data: byCliente } = useDemandasPorCliente();
+  const { data: byResponsavel } = useDemandasPorResponsavel();
 
   // mapear para o formato do seu chart
   const statusData = (byStatus ?? []).map((s) => ({
@@ -52,10 +52,10 @@ export function DashboardCharts() {
     fill: "#606062",
   }));
 
-  // para cliente, o endpoint retorna só contagem por cliente;
+  // para responsável, o endpoint retorna só contagem por responsável;
   // se quiser empilhar por tipo (Incremental/Melhoria/Bug), fazemos depois
-  const clientData = (byCliente ?? []).map((c) => ({
-    name: c.cliente ?? "—",
+  const responsavelData = (byResponsavel ?? []).map((c) => ({
+    name: c.responsavel ?? "—",
     Total: c.qtde,
   }));
 
@@ -200,18 +200,18 @@ export function DashboardCharts() {
         </CardContent>
       </Card>
 
-      {/* por Cliente (total) */}
+      {/* por Responsável (total) */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-slate-800">
-            Demandas por Cliente
+            Demandas por Responsável
           </CardTitle>
-          <CardDescription>Quantidade por cliente</CardDescription>
+          <CardDescription>Quantidade por responsável</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
-              data={clientData}
+              data={responsavelData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />

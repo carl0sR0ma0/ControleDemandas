@@ -18,26 +18,12 @@ public static class FormConfigEndpoints
         areas.MapPut("/{id:guid}", async (Guid id, AppDbContext db, SimpleUpdate dto) => { var e = await db.Areas.FindAsync(id); if (e is null) return Results.NotFound(); if (!string.IsNullOrWhiteSpace(dto.Name)) e.Name = dto.Name!; if (dto.Active is not null) e.Active = dto.Active.Value; await db.SaveChangesAsync(); return Results.NoContent(); });
         areas.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) => { var e = await db.Areas.FindAsync(id); if (e is null) return Results.NotFound(); db.Areas.Remove(e); await db.SaveChangesAsync(); return Results.NoContent(); });
 
-        // Clients
-        var clients = g.MapGroup("/clients");
-        clients.MapGet("/", async (AppDbContext db) => Results.Ok(await db.Clients.AsNoTracking().OrderBy(x=>x.Name).ToListAsync()));
-        clients.MapPost("/", async (AppDbContext db, SimpleCreate dto) => { var e = new Client { Name = dto.Name, Active = dto.Active ?? true }; db.Clients.Add(e); await db.SaveChangesAsync(); return Results.Created($"/configs/clients/{e.Id}", new { e.Id }); });
-        clients.MapPut("/{id:guid}", async (Guid id, AppDbContext db, SimpleUpdate dto) => { var e = await db.Clients.FindAsync(id); if (e is null) return Results.NotFound(); if (!string.IsNullOrWhiteSpace(dto.Name)) e.Name = dto.Name!; if (dto.Active is not null) e.Active = dto.Active.Value; await db.SaveChangesAsync(); return Results.NoContent(); });
-        clients.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) => { var e = await db.Clients.FindAsync(id); if (e is null) return Results.NotFound(); db.Clients.Remove(e); await db.SaveChangesAsync(); return Results.NoContent(); });
-
         // Units
         var units = g.MapGroup("/units");
         units.MapGet("/", async (AppDbContext db) => Results.Ok(await db.Units.AsNoTracking().OrderBy(x=>x.Name).ToListAsync()));
         units.MapPost("/", async (AppDbContext db, SimpleCreate dto) => { var e = new Unit { Name = dto.Name, Active = dto.Active ?? true }; db.Units.Add(e); await db.SaveChangesAsync(); return Results.Created($"/configs/units/{e.Id}", new { e.Id }); });
         units.MapPut("/{id:guid}", async (Guid id, AppDbContext db, SimpleUpdate dto) => { var e = await db.Units.FindAsync(id); if (e is null) return Results.NotFound(); if (!string.IsNullOrWhiteSpace(dto.Name)) e.Name = dto.Name!; if (dto.Active is not null) e.Active = dto.Active.Value; await db.SaveChangesAsync(); return Results.NoContent(); });
         units.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) => { var e = await db.Units.FindAsync(id); if (e is null) return Results.NotFound(); db.Units.Remove(e); await db.SaveChangesAsync(); return Results.NoContent(); });
-
-        // Statuses
-        var statuses = g.MapGroup("/statuses");
-        statuses.MapGet("/", async (AppDbContext db) => Results.Ok(await db.Statuses.AsNoTracking().OrderBy(x=>x.Name).ToListAsync()));
-        statuses.MapPost("/", async (AppDbContext db, SimpleCreate dto) => { var e = new StatusConfig { Name = dto.Name, Active = dto.Active ?? true }; db.Statuses.Add(e); await db.SaveChangesAsync(); return Results.Created($"/configs/statuses/{e.Id}", new { e.Id }); });
-        statuses.MapPut("/{id:guid}", async (Guid id, AppDbContext db, SimpleUpdate dto) => { var e = await db.Statuses.FindAsync(id); if (e is null) return Results.NotFound(); if (!string.IsNullOrWhiteSpace(dto.Name)) e.Name = dto.Name!; if (dto.Active is not null) e.Active = dto.Active.Value; await db.SaveChangesAsync(); return Results.NoContent(); });
-        statuses.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) => { var e = await db.Statuses.FindAsync(id); if (e is null) return Results.NotFound(); db.Statuses.Remove(e); await db.SaveChangesAsync(); return Results.NoContent(); });
 
         // Systems
         var systems = g.MapGroup("/systems");

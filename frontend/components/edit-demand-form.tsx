@@ -64,8 +64,6 @@ export function EditDemandForm({
         versions: ["2.38.1", "2.39.0"],
       },
     };
-  const clientsMock = ["Cliente A", "Cliente B", "Cliente C"];
-
   // estado do form inicializado a partir do detalhe
   const [formData, setFormData] = useState({
     description: "",
@@ -75,7 +73,6 @@ export function EditDemandForm({
     system: "",
     type: "",
     classification: "",
-    client: "",
     version: "",
     document: "",
     observation: "",
@@ -88,12 +85,11 @@ export function EditDemandForm({
       ...prev,
       description: data.description ?? "",
       module: data.module ?? "",
-      responsible: data.nextActionResponsible ?? currentUserId ?? "",
+      responsible: data.responsible ?? data.nextActionResponsible ?? currentUserId ?? "",
       area: data.reporterArea ?? "",
       system: data.productModule ?? "", // ajuste se no backend vier outro campo p/ sistema
       type: String(data.occurrenceType ?? "") || "",
       classification: String(data.classification ?? "") || "",
-      client: data.client ?? "",
       version: data.systemVersion ?? "",
       document: data.documentUrl ?? "",
       observation: data.observation ?? "",
@@ -346,24 +342,14 @@ export function EditDemandForm({
           </Select>
         </div>
 
-        {/* Cliente */}
+        {/* Responsável */}
         <div className="space-y-2 col-span-12 md:col-span-6">
-          <Label className="text-slate-700">Cliente</Label>
-          <Select
-            value={formData.client}
-            onValueChange={(value) => handleInputChange("client", value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecione o cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clientsMock.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-slate-700">Responsável</Label>
+          <Input
+            value={formData.responsible}
+            onChange={(e) => handleInputChange("responsible", e.target.value)}
+            placeholder="Informe o responsável"
+          />
         </div>
 
         {/* Classificação */}

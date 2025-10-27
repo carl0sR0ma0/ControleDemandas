@@ -23,7 +23,6 @@ import { PERMS, useAuthGuard } from "@/hooks/useAuthGuard";
 
 type FormOptions = {
   areas: string[];
-  clientes: string[];
   modulos: string[];
   prioridades: string[];
   unidades: string[];
@@ -52,7 +51,6 @@ export default function ConfiguracoesPage() {
 
   const [formOptions, setFormOptions] = useState<FormOptions>({
     areas: ["Tecnologia", "Engenharia", "PMO", "CX"],
-    clientes: ["Interno", "Raízen", "Cliente A", "Cliente B"],
     modulos: [
       "PGDI - Configuração",
       "PAP",
@@ -107,7 +105,6 @@ export default function ConfiguracoesPage() {
 
   const [newOptionInputs, setNewOptionInputs] = useState<NewOptionInputs>({
     areas: "",
-    clientes: "",
     modulos: "",
     prioridades: "",
     unidades: "",

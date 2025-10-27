@@ -44,17 +44,17 @@ public static class DashboardEndpoints
                 .Select(g => new { status = g.Key, qtde = g.Count() }).ToListAsync());
 
         g.MapGet("/por-area", async (AppDbContext db) =>
-            await db.Demands.GroupBy(d => d.ReporterArea)
+            await db.Demands.GroupBy(d => d.ReporterArea.Name)
                 .Select(g => new { area = g.Key, qtde = g.Count() }).ToListAsync());
 
         g.MapGet("/por-modulo", async (AppDbContext db) =>
-            await db.Demands.GroupBy(d => d.Module)
+            await db.Demands.GroupBy(d => d.Module.Name)
                 .Select(g => new { modulo = g.Key, qtde = g.Count() }).ToListAsync());
 
-        g.MapGet("/por-cliente", async (AppDbContext db) =>
-            await db.Demands.Where(d => d.Client != null)
-                .GroupBy(d => d.Client!)
-                .Select(g => new { cliente = g.Key, qtde = g.Count() }).ToListAsync());
+        g.MapGet("/por-responsavel", async (AppDbContext db) =>
+            await db.Demands.Where(d => d.Responsible != null)
+                .GroupBy(d => d.Responsible!)
+                .Select(g => new { responsavel = g.Key, qtde = g.Count() }).ToListAsync());
 
         return app;
     }

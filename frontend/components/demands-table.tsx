@@ -31,7 +31,6 @@ export function DemandsTable() {
       type: "Bug",
       area: "Tecnologia",
       module: "Indicadores",
-      client: "Interno",
       classification: "Urgente",
       status: "Execução",
       responsible: "João Silva",
@@ -46,7 +45,6 @@ export function DemandsTable() {
       type: "Incremental",
       area: "Engenharia",
       module: "Usuário",
-      client: "Raízen",
       classification: "Médio",
       status: "Aprovação",
       responsible: "Maria Santos",
@@ -61,7 +59,6 @@ export function DemandsTable() {
       type: "Melhoria",
       area: "PMO",
       module: "Dashboard",
-      client: "Cliente A",
       classification: "Baixo",
       status: "Validação",
       responsible: "Pedro Costa",
@@ -76,7 +73,6 @@ export function DemandsTable() {
       type: "Bug",
       area: "CX",
       module: "Relatórios",
-      client: "Cliente B",
       classification: "Urgente",
       status: "Ranqueado",
       responsible: "Ana Lima",
@@ -91,7 +87,6 @@ export function DemandsTable() {
       type: "Incremental",
       area: "Tecnologia",
       module: "PAP",
-      client: "Interno",
       classification: "Médio",
       status: "Concluída",
       responsible: "Carlos Souza",
@@ -170,7 +165,6 @@ export function DemandsTable() {
     const matchesSearch =
       demand.protocol.toLowerCase().includes(searchTerm.toLowerCase()) ||
       demand.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      demand.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
       demand.responsible.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilters = Object.entries(activeFilters).every(
@@ -265,7 +259,6 @@ export function DemandsTable() {
     | "type"
     | "area"
     | "module"
-    | "client"
     | "classification"
     | "status"
     | "responsible"
@@ -279,7 +272,6 @@ export function DemandsTable() {
     "module",
     "type",
     "area",
-    "client",
     "responsible",
     "classification",
     "status",
@@ -293,7 +285,6 @@ export function DemandsTable() {
     type: 110,
     area: 140,
     module: 200,
-    client: 140,
     classification: 140,
     status: 140,
     responsible: 160,
@@ -354,13 +345,6 @@ export function DemandsTable() {
             <FilterPopover column="module" title="Módulo" />
           </div>
         );
-      case "client":
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600">Cliente</span>
-            <FilterPopover column="client" title="Cliente" />
-          </div>
-        );
       case "responsible":
         return (
           <div className="flex items-center gap-2">
@@ -415,8 +399,6 @@ export function DemandsTable() {
             {demand.module}
           </span>
         );
-      case "client":
-        return <span className="text-sm text-slate-600">{demand.client}</span>;
       case "responsible":
         return <span className="text-sm text-slate-600">{demand.responsible}</span>;
       case "classification":
@@ -474,7 +456,7 @@ export function DemandsTable() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Buscar por protocolo, descrição, cliente ou responsável..."
+              placeholder="Buscar por protocolo, descrição ou responsável..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"

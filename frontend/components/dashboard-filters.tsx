@@ -14,7 +14,7 @@ export function DashboardFilters() {
     dateTo: "",
     area: "",
     module: "",
-    client: "",
+    responsavel: "",
     status: "",
   })
 
@@ -28,7 +28,7 @@ export function DashboardFilters() {
       dateTo: "",
       area: "",
       module: "",
-      client: "",
+      responsavel: "",
       status: "",
     })
   }
@@ -115,18 +115,12 @@ export function DashboardFilters() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm text-slate-600">Cliente</Label>
-            <Select value={filters.client} onValueChange={(value) => handleFilterChange("client", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os clientes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Interno">Interno</SelectItem>
-                <SelectItem value="Raízen">Raízen</SelectItem>
-                <SelectItem value="Cliente A">Cliente A</SelectItem>
-                <SelectItem value="Cliente B">Cliente B</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-sm text-slate-600">Responsável</Label>
+            <Input
+              value={filters.responsavel}
+              onChange={(e) => handleFilterChange("responsavel", e.target.value)}
+              placeholder="Buscar por responsável"
+            />
           </div>
 
           <div className="space-y-2">

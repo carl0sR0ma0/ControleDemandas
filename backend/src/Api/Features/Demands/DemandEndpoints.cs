@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Api.Domain;
 using Api.Persistence;
 using Api.Security;
@@ -29,19 +29,46 @@ public static class DemandEndpoints
 
         var g = app.MapGroup("/demands").RequireAuthorization("PERM:" + nameof(Permission.VisualizarDemandas));
 
-        g.MapGet("/", async (AppDbContext db, int page = 1, int size = 20, string? q = null,
-            DemandStatus? status = null, string? area = null, string? modulo = null,
-            string? cliente = null, OccurrenceType? tipo = null, Classification? classificacao = null,
-            DateOnly? from = null, DateOnly? to = null) =>
+        g.MapGet("/", async (
+            AppDbContext db,
+            int page = 1,
+            int size = 20,
+            string? q = null,
+            DemandStatus? status = null,
+            Guid? reporterAreaId = null,
+            Guid? moduleId = null,
+            Guid? unitId = null,
+            Guid? requesterUserId = null,
+            Guid? systemVersionId = null,
+            string? responsavel = null,
+            OccurrenceType? tipo = null,
+            Classification? classificacao = null,
+            DateOnly? from = null,
+            DateOnly? to = null) =>
         {
             var qry = db.Demands.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
-                qry = qry.Where(x => x.Protocol.Contains(q) || x.Description.ToLower().Contains(q.ToLower()) || (x.Client ?? string.Empty).Contains(q));
+            {
+                var qLower = q.ToLower();
+                qry = qry.Where(x =>
+                    x.Protocol.Contains(q) ||
+                    x.Description.ToLower().Contains(qLower) ||
+                    (x.Responsible ?? string.Empty).ToLower().Contains(qLower) ||
+                    x.Module.Name.ToLower().Contains(qLower) ||
+                    x.ReporterArea.Name.ToLower().Contains(qLower));
+            }
             if (status is not null) qry = qry.Where(x => x.Status == status);
-            if (!string.IsNullOrEmpty(area)) qry = qry.Where(x => x.ReporterArea == area);
-            if (!string.IsNullOrEmpty(modulo)) qry = qry.Where(x => x.Module == modulo);
-            if (!string.IsNullOrEmpty(cliente)) qry = qry.Where(x => x.Client == cliente);
+            if (reporterAreaId is not null) qry = qry.Where(x => x.ReporterAreaId == reporterAreaId);
+            if (moduleId is not null) qry = qry.Where(x => x.ModuleId == moduleId);
+            if (unitId is not null) qry = qry.Where(x => x.UnitId == unitId);
+            if (requesterUserId is not null) qry = qry.Where(x => x.RequesterUserId == requesterUserId);
+            if (systemVersionId is not null) qry = qry.Where(x => x.SystemVersionId == systemVersionId);
+            if (!string.IsNullOrWhiteSpace(responsavel))
+            {
+                var resLower = responsavel.ToLower();
+                qry = qry.Where(x => (x.Responsible ?? string.Empty).ToLower().Contains(resLower));
+            }
             if (tipo is not null) qry = qry.Where(x => x.OccurrenceType == tipo);
             if (classificacao is not null) qry = qry.Where(x => x.Classification == classificacao);
             if (from is not null) qry = qry.Where(x => x.OpenedAt >= from.Value.ToDateTime(TimeOnly.MinValue));
@@ -49,12 +76,29 @@ public static class DemandEndpoints
 
             var total = await qry.CountAsync();
             var items = await qry
+                .Include(x => x.Module)
+                .Include(x => x.ReporterArea)
+                .Include(x => x.Unit)
+                .Include(x => x.SystemVersion)
+                .Include(x => x.RequesterUser)
                 .OrderByDescending(x => x.OpenedAt)
                 .Skip((page - 1) * size).Take(size)
                 .Select(x => new {
-                    x.Id, x.Protocol, x.OpenedAt, x.OccurrenceType, x.Module, x.Client,
-                    x.ReporterArea, x.Classification, x.Status, x.NextActionResponsible,
-                    x.EstimatedDelivery, x.DocumentUrl
+                    x.Id,
+                    x.Protocol,
+                    x.OpenedAt,
+                    x.OccurrenceType,
+                    module = new { id = x.ModuleId, name = x.Module.Name },
+                    reporterArea = new { id = x.ReporterAreaId, name = x.ReporterArea.Name },
+                    unit = new { id = x.UnitId, name = x.Unit.Name },
+                    systemVersion = x.SystemVersionId != null ? new { id = x.SystemVersionId, version = x.SystemVersion!.Version } : null,
+                    requester = new { id = x.RequesterUserId, name = x.RequesterUser.Name, email = x.RequesterUser.Email },
+                    x.Responsible,
+                    x.Classification,
+                    x.Status,
+                    x.NextActionResponsible,
+                    x.EstimatedDelivery,
+                    x.DocumentUrl
                 })
                 .ToListAsync();
 
@@ -64,9 +108,30 @@ public static class DemandEndpoints
         g.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
         {
             var d = await db.Demands
-                .Include(x => x.Attachments)
-                .Include(x => x.History.OrderBy(h => h.Date))
-                .SingleOrDefaultAsync(x => x.Id == id);
+                .Where(x => x.Id == id)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Protocol,
+                    x.OpenedAt,
+                    x.Description,
+                    x.Observation,
+                    x.OccurrenceType,
+                    x.Classification,
+                    x.Status,
+                    module = new { id = x.ModuleId, name = x.Module.Name, systemId = x.Module.SystemEntityId },
+                    reporterArea = new { id = x.ReporterAreaId, name = x.ReporterArea.Name },
+                    unit = new { id = x.UnitId, name = x.Unit.Name },
+                    systemVersion = x.SystemVersionId != null ? new { id = x.SystemVersionId, version = x.SystemVersion!.Version } : null,
+                    requester = new { id = x.RequesterUserId, name = x.RequesterUser.Name, email = x.RequesterUser.Email },
+                    x.Responsible,
+                    x.NextActionResponsible,
+                    x.EstimatedDelivery,
+                    x.DocumentUrl,
+                    attachments = x.Attachments.Select(a => new { a.Id, a.FileName, a.ContentType, a.Size, a.CreatedAt }),
+                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note })
+                })
+                .SingleOrDefaultAsync();
             return d is null ? Results.NotFound() : Results.Ok(d);
         });
 
@@ -75,24 +140,40 @@ public static class DemandEndpoints
         {
             var protocol = await proto.GenerateAsync();
 
+            var module = await db.Modules.FindAsync(dto.ModuleId);
+            if (module is null) return Results.BadRequest(new { error = "module_not_found" });
+
+            var requester = await db.Users.FindAsync(dto.RequesterUserId);
+            if (requester is null) return Results.BadRequest(new { error = "requester_not_found" });
+
+            var area = await db.Areas.FindAsync(dto.ReporterAreaId);
+            if (area is null) return Results.BadRequest(new { error = "area_not_found" });
+
+            var unit = await db.Units.FindAsync(dto.UnitId);
+            if (unit is null) return Results.BadRequest(new { error = "unit_not_found" });
+
+            if (dto.SystemVersionId is Guid versionId)
+            {
+                var version = await db.SystemVersions.FindAsync(versionId);
+                if (version is null) return Results.BadRequest(new { error = "system_version_not_found" });
+                if (version.SystemEntityId != module.SystemEntityId)
+                    return Results.BadRequest(new { error = "system_version_mismatch" });
+            }
+
             var d = new Demand
             {
                 Protocol = protocol,
                 Description = dto.Description,
                 Observation = dto.Observation,
-                Module = dto.Module,
-                RequesterResponsible = dto.RequesterResponsible,
-                ReporterArea = dto.ReporterArea,
+                ModuleId = dto.ModuleId,
+                RequesterUserId = dto.RequesterUserId,
+                ReporterAreaId = dto.ReporterAreaId,
                 OccurrenceType = dto.OccurrenceType,
-                Unit = dto.Unit,
+                UnitId = dto.UnitId,
                 Classification = dto.Classification,
-                Client = dto.Client,
-                Priority = dto.Priority,
-                SystemVersion = dto.SystemVersion,
-                Reporter = dto.Reporter,
-                ProductModule = dto.ProductModule,
-                DocumentUrl = dto.DocumentUrl,
-                Order = dto.Order
+                Responsible = dto.Responsible,
+                SystemVersionId = dto.SystemVersionId,
+                DocumentUrl = dto.DocumentUrl
             };
 
             d.History.Add(new StatusHistory
@@ -107,8 +188,8 @@ public static class DemandEndpoints
 
             if (!string.IsNullOrWhiteSpace(dto.ReporterEmail))
                 await mail.SendAsync(dto.ReporterEmail!,
-                    $"[Protocolo {d.Protocol}] Solicitação recebida",
-                    $"<p>Sua solicitação foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
+                    $"[Protocolo {d.Protocol}] SolicitaÃ§Ã£o recebida",
+                    $"<p>Sua solicitaÃ§Ã£o foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
 
             return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
         })
@@ -151,7 +232,6 @@ public static class DemandEndpoints
             d.NextActionResponsible = dto.NextActionResponsible ?? d.NextActionResponsible;
             d.EstimatedDelivery = dto.EstimatedDelivery ?? d.EstimatedDelivery;
             d.DocumentUrl = dto.DocumentUrl ?? d.DocumentUrl;
-            if (dto.Order is not null) d.Order = dto.Order;
 
             await db.SaveChangesAsync();
             return Results.NoContent();
@@ -183,19 +263,15 @@ public static class DemandEndpoints
     public record CreateDemandDto(
         string Description,
         string? Observation,
-        string Module,
-        string RequesterResponsible,
-        string ReporterArea,
+        Guid ModuleId,
+        Guid RequesterUserId,
+        Guid ReporterAreaId,
         OccurrenceType OccurrenceType,
-        string Unit,
+        Guid UnitId,
         Classification Classification,
-        string? Client,
-        string? Priority,
-        string? SystemVersion,
-        string? Reporter,
-        string? ProductModule,
+        string? Responsible,
+        Guid? SystemVersionId,
         string? DocumentUrl,
-        int? Order,
         string? ReporterEmail
     );
 
@@ -203,9 +279,10 @@ public static class DemandEndpoints
         string? Observation,
         string? NextActionResponsible,
         DateTime? EstimatedDelivery,
-        string? DocumentUrl,
-        int? Order
+        string? DocumentUrl
     );
 
     public record ChangeStatusDto(DemandStatus NewStatus, string? Note);
 }
+
+

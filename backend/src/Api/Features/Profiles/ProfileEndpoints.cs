@@ -57,14 +57,31 @@ public static class ProfileEndpoints
         {
             var exists = await db.Profiles.AnyAsync(p => p.Id == id);
             if (!exists) return Results.NotFound();
+
             var current = await db.ProfilePermissions.Where(x => x.ProfileId == id).ToListAsync();
-            db.ProfilePermissions.RemoveRange(current);
-            if (dto.PermissionCodes?.Length > 0)
+            var requestedCodes = dto.PermissionCodes ?? Array.Empty<string>();
+            var targetPermissions = await db.Permissions.Where(x => requestedCodes.Contains(x.Code)).ToListAsync();
+            var targetIds = targetPermissions.Select(x => x.Id).ToHashSet();
+            var existingIds = current.Select(x => x.PermissionId).ToHashSet();
+
+            foreach (var pp in current)
             {
-                var perms = await db.Permissions.Where(x => dto.PermissionCodes.Contains(x.Code)).ToListAsync();
-                foreach (var perm in perms)
-                    db.ProfilePermissions.Add(new ProfilePermission { ProfileId = id, PermissionId = perm.Id, Granted = true });
+                pp.Granted = targetIds.Contains(pp.PermissionId);
             }
+
+            foreach (var perm in targetPermissions)
+            {
+                if (!existingIds.Contains(perm.Id))
+                {
+                    db.ProfilePermissions.Add(new ProfilePermission
+                    {
+                        ProfileId = id,
+                        PermissionId = perm.Id,
+                        Granted = true
+                    });
+                }
+            }
+
             await db.SaveChangesAsync();
             return Results.NoContent();
         });

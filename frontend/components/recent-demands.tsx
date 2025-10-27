@@ -25,7 +25,6 @@ export function RecentDemands() {
       module: "Indicadores",
       type: "Bug",
       area: "Tecnologia",
-      client: "Interno",
       responsible: "João Silva",
       classification: "Urgente",
       status: "Execução",
@@ -38,7 +37,6 @@ export function RecentDemands() {
       module: "Usuário",
       type: "Incremental",
       area: "Engenharia",
-      client: "Raízen",
       responsible: "Maria Santos",
       classification: "Médio",
       status: "Aprovação",
@@ -51,7 +49,6 @@ export function RecentDemands() {
       module: "Dashboard",
       type: "Melhoria",
       area: "PMO",
-      client: "Cliente A",
       responsible: "Pedro Costa",
       classification: "Baixo",
       status: "Validação",
@@ -64,7 +61,6 @@ export function RecentDemands() {
       module: "Relatórios",
       type: "Bug",
       area: "CX",
-      client: "Interno",
       responsible: "Ana Lima",
       classification: "Urgente",
       status: "Ranqueado",
@@ -132,7 +128,6 @@ export function RecentDemands() {
     const matchesSearch =
       d.protocol.toLowerCase().includes(s) ||
       d.description.toLowerCase().includes(s) ||
-      d.client.toLowerCase().includes(s) ||
       d.module.toLowerCase().includes(s)
 
     const matchesFilters = Object.entries(activeFilters).every(([col, values]) => {
@@ -219,7 +214,7 @@ export function RecentDemands() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Buscar por protocolo, descrição, cliente ou módulo..."
+            placeholder="Buscar por protocolo, descrição ou módulo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -288,12 +283,6 @@ export function RecentDemands() {
                 </th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   <div className="flex items-center gap-2">
-                    <span>Cliente</span>
-                    <FilterPopover column="client" title="Cliente" />
-                  </div>
-                </th>
-                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
-                  <div className="flex items-center gap-2">
                     <span>Responsável</span>
                     <FilterPopover column="responsible" title="Responsável" />
                   </div>
@@ -330,7 +319,6 @@ export function RecentDemands() {
                     </Badge>
                   </td>
                   <td className="py-3 px-2 text-sm text-slate-600">{demand.area}</td>
-                  <td className="py-3 px-2 text-sm text-slate-600">{demand.client}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{demand.responsible}</td>
                   <td className="py-3 px-2">
                     <Badge className={demand.classification === "Urgente" ? "bg-red-500 text-white" : demand.classification === "Médio" ? "bg-yellow-500 text-white" : "bg-gray-500 text-white"}>

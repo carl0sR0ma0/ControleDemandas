@@ -26,7 +26,6 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     area: "Tecnologia",
     system: "PGDI",
     module: "Indicadores",
-    client: "Interno",
     classification: "Urgente",
     status: "Execução",
     responsible: "João Silva",
@@ -141,24 +140,20 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
               </div>
             </div>
 
-            {/* Linha: Área, Cliente, Classificação, Responsável */}
+            {/* Linha: Área, Responsável, Classificação */}
             <div>
               <span className="text-sm text-slate-600">Área Relatora</span>
               <p className="font-medium text-slate-800 mt-1">{demand.area}</p>
             </div>
             <div>
-              <span className="text-sm text-slate-600">Cliente</span>
-              <p className="font-medium text-slate-800 mt-1">{demand.client}</p>
+              <span className="text-sm text-slate-600">Responsável</span>
+              <p className="font-medium text-slate-800 mt-1">{demand.responsible}</p>
             </div>
             <div>
               <span className="text-sm text-slate-600">Classificação</span>
               <div className="mt-1">
                 <Badge className={getClassificationColor(demand.classification)}>{demand.classification}</Badge>
               </div>
-            </div>
-            <div>
-              <span className="text-sm text-slate-600">Responsável</span>
-              <p className="font-medium text-slate-800 mt-1">{demand.responsible}</p>
             </div>
           </div>
         </CardContent>

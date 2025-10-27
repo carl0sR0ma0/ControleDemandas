@@ -21,8 +21,8 @@ export async function getPorModulo() {
   return data;
 }
 
-export async function getPorCliente() {
-  const { data } = await http.get<{ cliente: string; qtde: number }[]>("/dashboard/por-cliente");
+export async function getPorResponsavel() {
+  const { data } = await http.get<{ responsavel: string; qtde: number }[]>("/dashboard/por-responsavel");
   return data;
 }
 

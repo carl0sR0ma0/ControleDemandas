@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,11 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, X, CheckCircle, FileText, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { getSystems, getModules, getVersions, getAreas, getClients, getUnits } from "@/lib/api/configs";
+import { getSystems, getModules, getVersions, getAreas, getUnits } from "@/lib/api/configs";
 import { createDemand } from "@/lib/api/demands";
-import type { Classification, OccurrenceType } from "@/types/api";
+import { Classification, OccurrenceType } from "@/types/api";
+import { getCurrentUser } from "@/hooks/useAuth";
 
-export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
+export function NewDemandForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -35,22 +36,31 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
 
   const [formData, setFormData] = useState({
     description: "",
-    module: "",
-    responsible: currentUserId ?? "",
-    area: "",
+    reporterAreaId: "",
+    occurrenceType: "",
+    moduleId: "",
     systemId: "",
-    type: "",
+    systemVersionId: "",
+    unitId: "",
     classification: "",
-    client: "",
-    unit: "",
-    version: "",
-    document: "",
+    responsible: "",
+    requesterUserId: "",
+    documentUrl: "",
     observation: "",
   });
-  // Opções (via API)
+  const NO_SYSTEM_VERSION_VALUE = "__no_system_version__";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const user = getCurrentUser();
+    if (!user?.id) return;
+    setFormData((prev) =>
+      prev.requesterUserId === user.id ? prev : { ...prev, requesterUserId: user.id },
+    );
+  }, []);
+  // Opcoes (via API)
   const { data: systems = [] } = useQuery({ queryKey: ["cfg","systems"], queryFn: getSystems });
   const { data: areas = [] } = useQuery({ queryKey: ["cfg","areas"], queryFn: getAreas });
-  const { data: clients = [] } = useQuery({ queryKey: ["cfg","clients"], queryFn: getClients });
   const { data: units = [] } = useQuery({ queryKey: ["cfg","units"], queryFn: getUnits });
   const { data: versions = [] } = useQuery({ queryKey: ["cfg","versions", formData.systemId], queryFn: () => formData.systemId ? getVersions(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
   const { data: modules = [] } = useQuery({ queryKey: ["cfg","modules", formData.systemId], queryFn: () => formData.systemId ? getModules(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
@@ -74,23 +84,24 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      if (!formData.requesterUserId) {
+        alert("Nao foi possivel identificar o usuario solicitante.");
+        setIsSubmitting(false);
+        return;
+      }
       const payload = {
         description: formData.description,
         observation: formData.observation || undefined,
-        module: formData.module,
-        requesterResponsible: formData.responsible || "",
-        reporterArea: formData.area,
-        occurrenceType: (formData.type || "") as unknown as OccurrenceType,
-        unit: formData.unit || "",
-        classification: (formData.classification || "Baixo") as unknown as Classification,
-        client: formData.client || undefined,
-        priority: undefined,
-        systemVersion: formData.version || undefined,
-        reporter: undefined,
-        productModule: undefined,
-        documentUrl: formData.document || undefined,
-        order: undefined,
+        moduleId: formData.moduleId,
+        requesterUserId: formData.requesterUserId,
+        reporterAreaId: formData.reporterAreaId,
+        occurrenceType: (Number(formData.occurrenceType) || OccurrenceType.Incremental) as OccurrenceType,
+        unitId: formData.unitId,
+        classification: (Number(formData.classification) || Classification.Baixo) as Classification,
+        systemVersionId: formData.systemVersionId || undefined,
+        documentUrl: formData.documentUrl || undefined,
         reporterEmail: undefined,
+        responsible: formData.responsible || undefined,
       };
       const res = await createDemand(payload);
       setGeneratedProtocol(res.protocol);
@@ -112,7 +123,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
               Demanda Criada com Sucesso!
             </h2>
             <p className="text-slate-600 mb-4">
-              Sua solicitação foi registrada no sistema.
+              Sua solicitacao foi registrada no sistema.
             </p>
             <div className="bg-[#04A4A1] text-white px-6 py-3 rounded-lg inline-block">
               <span className="text-sm font-medium">Protocolo:</span>
@@ -123,8 +134,8 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
           </div>
           <Alert>
             <AlertDescription>
-              Um e-mail de confirmaÃ§Ã£o foi enviado com o número do protocolo e
-              detalhes da solicitação.
+              Um e-mail de confirmaAAo foi enviado com o numero do protocolo e
+              detalhes da solicitacao.
             </AlertDescription>
           </Alert>
           <div className="flex gap-4 justify-center">
@@ -154,10 +165,10 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     >
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">
-          Informações da Demanda
+          Informacoes da Demanda
         </h2>
         <p className="text-slate-600">
-          Preencha todos os campos Obrigatórios para registrar sua solicitação
+          Preencha todos os campos Obrigatorios para registrar sua solicitacao
         </p>
       </div>
 
@@ -173,13 +184,13 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             Tipo de Demanda <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
-            value={formData.type}
-            onValueChange={(value) => handleInputChange("type", value)}
+            value={formData.occurrenceType}
+            onValueChange={(value) => handleInputChange("occurrenceType", value)}
             required
             className="grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Incremental" id="incremental" />
+              <RadioGroupItem value={String(OccurrenceType.Incremental)} id="incremental" />
               <Label htmlFor="incremental" className="flex items-center gap-1">
                 Incremental
                 <Tooltip>
@@ -187,13 +198,13 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    implementação de algo novo ou evoluÃ§Ã£o
+                    implementacao de algo novo ou evoluAAo
                   </TooltipContent>
                 </Tooltip>
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Melhoria" id="melhoria" />
+              <RadioGroupItem value={String(OccurrenceType.Melhoria)} id="melhoria" />
               <Label htmlFor="melhoria" className="flex items-center gap-1">
                 Melhoria
                 <Tooltip>
@@ -201,13 +212,13 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    pequeno ajuste de algo já existente
+                    pequeno ajuste de algo ja existente
                   </TooltipContent>
                 </Tooltip>
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Bug" id="bug" />
+              <RadioGroupItem value={String(OccurrenceType.Bug)} id="bug" />
               <Label htmlFor="bug" className="flex items-center gap-1">
                 Bug
                 <Tooltip>
@@ -232,7 +243,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             value={formData.systemId}
             onValueChange={(value) => {
               // Reset dependents when changing Sistema
-              setFormData((prev) => ({ ...prev, system: value, module: "", version: "" }));
+              setFormData((prev) => ({ ...prev, systemId: value, moduleId: "", systemVersionId: "" }));
             }}
             required
           >
@@ -247,109 +258,109 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
           </Select>
         </div>
 
-        {/* Módulo (dependente de Sistema) */}
+        {/* Modulo (dependente de Sistema) */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">
-            Módulo <span className="text-red-500">*</span>
+            Modulo <span className="text-red-500">*</span>
           </Label>
           <Select
             disabled={!formData.systemId}
-            value={formData.module}
-            onValueChange={(value) => handleInputChange("module", value)}
+            value={formData.moduleId}
+            onValueChange={(value) => handleInputChange("moduleId", value)}
             required
           >
             <SelectTrigger className={triggerClass}>
-              <SelectValue placeholder={formData.systemId ? "Selecione o módulo" : "Selecione primeiro o sistema"} />
+              <SelectValue placeholder={formData.systemId ? "Selecione o modulo" : "Selecione primeiro o sistema"} />
             </SelectTrigger>
             <SelectContent>
               {(modules || []).map((m) => (
-                <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
+                <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Versão (dependente de Sistema) */}
+        {/* Versao (dependente de Sistema) */}
         <div className="space-y-2 col-span-12 md:col-span-6">
-          <Label className="text-slate-700">Versão do Sistema</Label>
+          <Label className="text-slate-700">Versao do Sistema</Label>
           <Select
             disabled={!formData.systemId}
-            value={formData.version}
-            onValueChange={(value) => handleInputChange("version", value)}
+            value={formData.systemVersionId}
+            onValueChange={(value) =>
+              handleInputChange(
+                "systemVersionId",
+                value === NO_SYSTEM_VERSION_VALUE ? "" : value,
+              )
+            }
             required
           >
             <SelectTrigger className={triggerClass}>
-              <SelectValue placeholder={formData.systemId ? "Selecione a versão" : "Selecione primeiro o sistema"} />
+              <SelectValue placeholder={formData.systemId ? "Selecione a versao" : "Selecione primeiro o sistema"} />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={NO_SYSTEM_VERSION_VALUE}>Sem versao definida</SelectItem>
               {(versions || []).map((v) => (
-                <SelectItem key={v.id} value={v.version}>{v.version}</SelectItem>
+                <SelectItem key={v.id} value={v.id}>{v.version}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Área Relatora */}
+        {/* Area Relatora */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">
-            Área Relatora <span className="text-red-500">*</span>
+            Area Relatora <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={formData.area}
-            onValueChange={(value) => handleInputChange("area", value)}
+            value={formData.reporterAreaId}
+            onValueChange={(value) => handleInputChange("reporterAreaId", value)}
             required
           >
             <SelectTrigger className={triggerClass}>
-              <SelectValue placeholder="Selecione a área" />
+              <SelectValue placeholder="Selecione a area" />
             </SelectTrigger>
             <SelectContent>
               {areas.map((a) => (
-                <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Cliente (selecionável) */}
+        {/* Responsavel */}
         <div className="space-y-2 col-span-12 md:col-span-6">
-          <Label className="text-slate-700">Cliente</Label>
-          <Select
-            value={formData.client}
-            onValueChange={(value) => handleInputChange("client", value)}
-          >
-            <SelectTrigger className={triggerClass}>
-              <SelectValue placeholder="Selecione o cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients.map((c) => (
-                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-slate-700">Responsavel</Label>
+          <Input
+            value={formData.responsible}
+            onChange={(e) => handleInputChange("responsible", e.target.value)}
+            placeholder="Informe quem sera responsavel"
+            className={fieldClass}
+          />
         </div>
 
         {/* Unidade */}
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">Unidade</Label>
           <Select
-            value={formData.unit}
-            onValueChange={(value) => handleInputChange("unit", value)}
+            value={formData.unitId}
+            onValueChange={(value) => handleInputChange("unitId", value)}
+            required
           >
             <SelectTrigger className={triggerClass}>
               <SelectValue placeholder="Selecione a unidade" />
             </SelectTrigger>
             <SelectContent>
               {units.map((u) => (
-                <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Classificação */}
+        {/* Classificacao */}
         <div className="space-y-3 col-span-12">
           <Label className="text-slate-700">
-            Classificação <span className="text-red-500">*</span>
+            Classificacao <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
             value={formData.classification}
@@ -360,7 +371,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             className="grid grid-cols-1 sm:grid-cols-3 gap-3"
           >
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Urgente" id="urgente" />
+              <RadioGroupItem value={String(Classification.Urgente)} id="urgente" />
               <Label htmlFor="urgente" className="flex items-center gap-1">
                 <Badge variant="destructive">Urgente</Badge>
                 <Tooltip>
@@ -368,27 +379,27 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Indisponibilidade de sistema (impacto crítico imediato)
+                    Indisponibilidade de sistema (impacto critico imediato)
                   </TooltipContent>
                 </Tooltip>
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Médio" id="medio" />
+              <RadioGroupItem value={String(Classification.Medio)} id="medio" />
               <Label htmlFor="medio" className="flex items-center gap-1">
-                <Badge className="bg-yellow-500">Médio</Badge>
+                <Badge className="bg-yellow-500">Medio</Badge>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Falhas que impactam mas não bloqueiam o uso
+                    Falhas que impactam mas nao bloqueiam o uso
                   </TooltipContent>
                 </Tooltip>
               </Label>
             </div>
             <div className="flex items-center gap-2">
-              <RadioGroupItem value="Baixo" id="baixo" />
+              <RadioGroupItem value={String(Classification.Baixo)} id="baixo" />
               <Label htmlFor="baixo" className="flex items-center gap-1">
                 <Badge variant="secondary">Baixo</Badge>
                 <Tooltip>
@@ -396,7 +407,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Solicitações de melhoria ou ajustes
+                    Solicitacoes de melhoria ou ajustes
                   </TooltipContent>
                 </Tooltip>
               </Label>
@@ -406,14 +417,14 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
 
         <Separator className="col-span-12" />
 
-        {/* Descrição */}
+        {/* Descricao */}
         <div className="space-y-2 col-span-12">
           <Label htmlFor="description" className="text-slate-700">
-            Descrição <span className="text-red-500">*</span>
+            Descricao <span className="text-red-500">*</span>
           </Label>
           <Textarea
             id="description"
-            placeholder="Descreva detalhadamente sua solicitação..."
+            placeholder="Descreva detalhadamente sua solicitacao..."
             value={formData.description}
             onChange={(e) => handleInputChange("description", e.target.value)}
             required
@@ -479,19 +490,19 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             id="document"
             type="url"
             placeholder="https://exemplo.com/documento"
-            value={formData.document}
-            onChange={(e) => handleInputChange("document", e.target.value)}
+            value={formData.documentUrl}
+            onChange={(e) => handleInputChange("documentUrl", e.target.value)}
           />
         </div>
 
-        {/* Observação */}
+        {/* Observacao */}
         <div className="space-y-2 col-span-12">
           <Label htmlFor="observation" className="text-slate-700">
-            Observação
+            Observacao
           </Label>
           <Textarea
             id="observation"
-            placeholder="Informações adicionais..."
+            placeholder="Informacoes adicionais..."
             value={formData.observation}
             onChange={(e) => handleInputChange("observation", e.target.value)}
             rows={3}
@@ -517,13 +528,3 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     </form>
   );
 }
-
-
-
-
-
-
-
-
-
-

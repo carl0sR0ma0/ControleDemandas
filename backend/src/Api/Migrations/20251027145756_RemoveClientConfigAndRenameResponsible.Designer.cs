@@ -3,6 +3,7 @@ using System;
 using Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251027145756_RemoveClientConfigAndRenameResponsible")]
+    partial class RemoveClientConfigAndRenameResponsible
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,8 +101,10 @@ namespace Api.Migrations
                     b.Property<DateTime?>("EstimatedDelivery")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("ModuleId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<string>("NextActionResponsible")
                         .HasMaxLength(120)
@@ -114,16 +119,35 @@ namespace Api.Migrations
                     b.Property<DateTime>("OpenedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Priority")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ProductModule")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
                     b.Property<string>("Protocol")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.Property<Guid>("ReporterAreaId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Reporter")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
-                    b.Property<Guid>("RequesterUserId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("ReporterArea")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("RequesterResponsible")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<string>("Responsible")
                         .HasMaxLength(120)
@@ -132,26 +156,19 @@ namespace Api.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("SystemVersionId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("SystemVersion")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
-                    b.Property<Guid>("UnitId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ModuleId");
-
                     b.HasIndex("Protocol")
                         .IsUnique();
-
-                    b.HasIndex("ReporterAreaId");
-
-                    b.HasIndex("RequesterUserId");
-
-                    b.HasIndex("SystemVersionId");
-
-                    b.HasIndex("UnitId");
 
                     b.ToTable("Demands");
                 });
@@ -490,11 +507,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 612, DateTimeKind.Utc).AddTicks(4682),
+                            CreatedAt = new DateTime(2025, 10, 27, 14, 57, 56, 28, DateTimeKind.Utc).AddTicks(179),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$5HYvi8YdzgAGGEE6spaUKOVQBtN7YsQCmv5rmNYNReexh2eKDZBUS",
+                            PasswordHash = "$2a$11$1liel38STfM9vA2cYJN8D.0Q691818DVF51pO7vpXMdXDgSArc3Iq",
                             ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
                             Role = "Admin"
                         },
@@ -502,11 +519,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 721, DateTimeKind.Utc).AddTicks(7538),
+                            CreatedAt = new DateTime(2025, 10, 27, 14, 57, 56, 146, DateTimeKind.Utc).AddTicks(2886),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$SkQHAtSRAx/XyHSGtzKEeep8IFTdAqNvj3NvMdzoBQ3xY9IodPO/S",
+                            PasswordHash = "$2a$11$aoZ/Yp04YRBbRY0lZcwcGepohAwBeb.nRLCc31HnhiV/RskTNQ0c2",
                             ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
                             Role = "Gestor"
                         });
@@ -607,48 +624,6 @@ namespace Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Demand");
-                });
-
-            modelBuilder.Entity("Api.Domain.Demand", b =>
-                {
-                    b.HasOne("Api.Domain.ModuleEntity", "Module")
-                        .WithMany()
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Api.Domain.Area", "ReporterArea")
-                        .WithMany()
-                        .HasForeignKey("ReporterAreaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Api.Domain.User", "RequesterUser")
-                        .WithMany()
-                        .HasForeignKey("RequesterUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Api.Domain.SystemVersion", "SystemVersion")
-                        .WithMany()
-                        .HasForeignKey("SystemVersionId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Api.Domain.Unit", "Unit")
-                        .WithMany()
-                        .HasForeignKey("UnitId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Module");
-
-                    b.Navigation("ReporterArea");
-
-                    b.Navigation("RequesterUser");
-
-                    b.Navigation("SystemVersion");
-
-                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("Api.Domain.ModuleEntity", b =>
