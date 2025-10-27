@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FormConfigs } from "@/components/form-configs";
 import { Bell, Save, Settings, Shield, Plus, X } from "lucide-react";
 import { PERMS, useAuthGuard } from "@/hooks/useAuthGuard";
 
@@ -197,10 +198,9 @@ export default function ConfiguracoesPage() {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="formularios">Formulários</TabsTrigger>
-          <TabsTrigger value="permissoes">Permissões</TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="space-y-6">
@@ -254,148 +254,13 @@ export default function ConfiguracoesPage() {
         </TabsContent>
 
         <TabsContent value="formularios" className="space-y-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Settings className="h-5 w-5 text-[#04A4A1]" />
-                <CardTitle>Opções dos Formulários</CardTitle>
-              </div>
-              <CardDescription>
-                Configure as opções disponíveis nos formulários de demanda
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              {Object.entries(formOptions).map(([category, options]) => {
-                const cat = category as keyof FormOptions;
-                return (
-                  <div key={category} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-medium capitalize">
-                        {category}
-                      </Label>
-                      <Badge variant="secondary">{options.length} opções</Badge>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {options.map((option, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1"
-                        >
-                          <span className="text-sm">{option}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-4 w-4 p-0 hover:bg-red-100"
-                            onClick={() => removeOption(cat, index)}
-                          >
-                            <X className="h-3 w-3 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder={`Nova opção para ${category}`}
-                        value={newOptionInputs[cat]}
-                        onChange={(e) =>
-                          setNewOptionInputs((prev) => ({
-                            ...prev,
-                            [cat]: e.target.value,
-                          }))
-                        }
-                        onKeyDown={(e) => e.key === "Enter" && addOption(cat)} // ✅ onKeyDown
-                      />
-                      <Button
-                        variant="outline"
-                        onClick={() => addOption(cat)}
-                        disabled={!newOptionInputs[cat].trim()}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Separator />
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+          <FormConfigs />
         </TabsContent>
 
-        <TabsContent value="permissoes" className="space-y-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-[#04A4A1]" />
-                <CardTitle>Sistema de Permissões</CardTitle>
-              </div>
-              <CardDescription>
-                Configure as permissões para cada tipo de usuário
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {Object.entries(permissions).map(([role, rolePermissions]) => (
-                <div key={role} className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-[#04A4A1] text-white">{role}</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.entries(rolePermissions as any).map(
-                      ([module, modulePermissions]) => (
-                        <Card key={module} className="border border-slate-200">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-sm font-medium capitalize">
-                              {module}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            {Object.entries(modulePermissions as any).map(
-                              ([permission, value]) => (
-                                <div
-                                  key={permission}
-                                  className="flex items-center justify-between"
-                                >
-                                  <Label className="text-xs capitalize">
-                                    {permission}
-                                  </Label>
-                                  <Switch
-                                    checked={Boolean(value)}
-                                    onCheckedChange={(checked) =>
-                                      updatePermission(
-                                        role,
-                                        module,
-                                        permission,
-                                        checked
-                                      )
-                                    }
-                                  />
-                                </div>
-                              )
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    )}
-                  </div>
-                  <Separator />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Permissões movidas para página Usuários (limpeza de duplicidades) */}
       </Tabs>
 
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          className="bg-[#04A4A1] hover:bg-[#038a87]"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Salvar Alterações
-        </Button>
-      </div>
+      
     </div>
   );
 }

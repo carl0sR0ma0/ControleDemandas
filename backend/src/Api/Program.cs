@@ -2,15 +2,22 @@ using Api.Features.Auth;
 using Api.Features.Dashboard;
 using Api.Features.Demands;
 using Api.Features.Users;
+using Api.Features.System;
+using Api.Features.Permissions;
+using Api.Features.Profiles;
+using Api.Features.Configs;
 using Api.Persistence;
 using Api.Security;
 using Api.Services;
+using Api.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +28,15 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
 
 // CORS
 builder.Services.AddCors(opts =>
+{
+    var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+        ?? new[] { "http://localhost:5173", "http://localhost:5177" };
     opts.AddPolicy("frontend", p => p
-        .WithOrigins(builder.Configuration["Cors:Origin"] ?? "http://localhost:5173")
-        .AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+        .WithOrigins(origins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
+});
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(o =>
@@ -61,10 +74,25 @@ builder.Services.AddScoped<EmailService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddProblemDetails(opts =>
+{
+    opts.CustomizeProblemDetails = ctx =>
+    {
+        ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
+    };
+});
+
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddCheck<Api.Health.DbHealthCheck>("db");
+
+// FluentValidation - registra todos os validators do assembly
+builder.Services.AddValidatorsFromAssemblyContaining<Api.Features.Auth.LoginDtoValidator>();
 
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+app.UseExceptionHandler();
 app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -80,10 +108,19 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapHealthChecks("/healthz");
+app.MapHealthChecks("/health/db", new HealthCheckOptions
+{
+    Predicate = r => r.Name == "db"
+});
 
 app.MapAuth();
-app.MapUserEndpoints();
+app.MapUserManagement();
 app.MapDemandEndpoints();
 app.MapDashboard();
+app.MapInit();
+app.MapPermissionEndpoints();
+app.MapProfileEndpoints();
+app.MapFormConfigEndpoints();
 
 app.Run();

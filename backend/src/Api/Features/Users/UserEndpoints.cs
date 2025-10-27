@@ -14,8 +14,8 @@ public static class UserEndpoints
             .RequireAuthorization("PERM:" + nameof(Permission.GerenciarUsuarios));
 
         g.MapGet("/", async (AppDbContext db) =>
-            await db.Users.Select(u => new {
-                u.Id, u.Name, u.Email, u.Role, u.Active, permissions = (long)u.Permissions, u.CreatedAt
+            await db.Users.AsNoTracking().Select(u => new {
+                u.Id, u.Name, u.Email, u.Role, u.Active, u.CreatedAt
             }).ToListAsync());
 
         g.MapPut("/{id:guid}", async (Guid id, AppDbContext db, UpdateUserDto dto) =>
@@ -24,7 +24,6 @@ public static class UserEndpoints
             if (u is null) return Results.NotFound();
             u.Name = dto.Name ?? u.Name;
             u.Role = dto.Role ?? u.Role;
-            if (dto.Permissions is not null) u.Permissions = dto.Permissions.Value;
             if (dto.Active is not null) u.Active = dto.Active.Value;
             await db.SaveChangesAsync();
             return Results.NoContent();
@@ -42,6 +41,6 @@ public static class UserEndpoints
         return app;
     }
 
-    public record UpdateUserDto(string? Name, string? Role, Permission? Permissions, bool? Active);
+    public record UpdateUserDto(string? Name, string? Role, bool? Active);
     public record ResetPasswordDto(string NewPassword);
 }

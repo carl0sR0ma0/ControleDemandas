@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { http } from "../lib/http";
+import { login as apiLogin } from "@/lib/api/auth";
 import type { AuthUser } from "../types/api";
 
 type LoginResponse = { token: string; user: AuthUser };
@@ -7,7 +7,7 @@ type LoginResponse = { token: string; user: AuthUser };
 export function useLogin() {
   return useMutation({
     mutationFn: async (params: { email: string; password: string }) => {
-      const { data } = await http.post<LoginResponse>("/auth/login", params);
+      const data = await apiLogin(params);
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("auth_user", JSON.stringify(data.user));
       return data.user;

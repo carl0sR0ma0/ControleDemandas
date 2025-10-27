@@ -16,7 +16,7 @@ public class JwtOptions
 
 public static class JwtToken
 {
-    public static string Create(User u, JwtOptions opt)
+    public static string Create(User u, long permMask, JwtOptions opt)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(opt.SigningKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -28,7 +28,7 @@ public static class JwtToken
             new Claim(ClaimTypes.Name, u.Name),
             new Claim(ClaimTypes.Email, u.Email),
             new Claim(ClaimTypes.Role, u.Role),
-            new Claim("perms", ((long)u.Permissions).ToString())
+            new Claim("perms", permMask.ToString())
         };
 
         var token = new JwtSecurityToken(opt.Issuer, opt.Audience, claims,

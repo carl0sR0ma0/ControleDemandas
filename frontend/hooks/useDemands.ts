@@ -1,5 +1,13 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { http } from "../lib/http";
+import {
+  listDemands,
+  getDemand,
+  createDemand,
+  updateDemand,
+  changeDemandStatus,
+  uploadAttachments,
+  type DemandListResponse,
+} from "@/lib/api/demands";
 import type {
   DemandDetail,
   DemandListItem,
@@ -9,12 +17,7 @@ import type {
 } from "../types/api";
 import { queryClient } from "../lib/queryClient";
 
-export interface DemandListResponse {
-  total: number;
-  page: number;
-  size: number;
-  items: DemandListItem[];
-}
+export type { DemandListResponse };
 
 export interface DemandListFilters {
   page?: number;
@@ -30,19 +33,12 @@ export interface DemandListFilters {
   to?: string;
 }
 
-const toQuery = (f: DemandListFilters) =>
-  Object.entries(f)
-    .filter(([_, v]) => v !== undefined && v !== null && v !== "")
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-    .join("&");
-
 export function useDemandList(filters: DemandListFilters) {
-  const q = toQuery({ page: 1, size: 20, ...filters });
+  const q = { page: 1, size: 20, ...filters };
   return useQuery({
     queryKey: ["demands", "list", q],
     queryFn: async () => {
-      const { data } = await http.get<DemandListResponse>(`/demands?${q}`);
-      return data;
+      return await listDemands(q);
     },
     keepPreviousData: true,
   });
@@ -52,8 +48,7 @@ export function useDemandDetail(id?: string) {
   return useQuery({
     queryKey: ["demands", "detail", id],
     queryFn: async () => {
-      const { data } = await http.get<DemandDetail>(`/demands/${id}`);
-      return data;
+      return await getDemand(id!);
     },
     enabled: !!id,
   });
@@ -81,8 +76,7 @@ export interface CreateDemandDto {
 export function useCreateDemand() {
   return useMutation({
     mutationFn: async (payload: CreateDemandDto) => {
-      const { data } = await http.post<{ id: string; protocol: string }>(`/demands`, payload);
-      return data;
+      return await createDemand(payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "list"] });
@@ -102,7 +96,7 @@ export interface UpdateDemandDto {
 export function useUpdateDemand(id: string) {
   return useMutation({
     mutationFn: async (payload: UpdateDemandDto) => {
-      await http.put(`/demands/${id}`, payload);
+      await updateDemand(id!, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
@@ -114,11 +108,7 @@ export function useUpdateDemand(id: string) {
 export function useChangeDemandStatus(id: string) {
   return useMutation({
     mutationFn: async (params: { newStatus: DemandStatus; note?: string }) => {
-      const { data } = await http.post<{ id: string; status: DemandStatus }>(
-        `/demands/${id}/status`,
-        params
-      );
-      return data;
+      return await changeDemandStatus(id, params);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
@@ -131,14 +121,7 @@ export function useChangeDemandStatus(id: string) {
 export function useUploadAttachments(id: string) {
   return useMutation({
     mutationFn: async (files: File[]) => {
-      const form = new FormData();
-      files.forEach((f) => form.append("files", f));
-      const { data } = await http.post<{ id: string; fileName: string; size: number }[]>(
-        `/demands/${id}/attachments`,
-        form,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      return data;
+      return await uploadAttachments(id, files);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });

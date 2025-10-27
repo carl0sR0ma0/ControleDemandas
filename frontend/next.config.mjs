@@ -1,14 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
+  reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
 
-export default nextConfig
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+
+  // Produção containerizada amigável
+  output: 'standalone',
+
+  // Otimizações de bundle
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
+
+  images: { unoptimized: true },
+};
+
+export default nextConfig;
+

@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import type React from "react";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,9 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, X, CheckCircle, FileText, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { getSystems, getModules, getVersions, getAreas, getClients, getUnits } from "@/lib/api/configs";
+import { createDemand } from "@/lib/api/demands";
+import type { Classification, OccurrenceType } from "@/types/api";
 
 export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
   const router = useRouter();
@@ -34,31 +38,22 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     module: "",
     responsible: currentUserId ?? "",
     area: "",
-    system: "",
+    systemId: "",
     type: "",
     classification: "",
     client: "",
+    unit: "",
     version: "",
     document: "",
     observation: "",
   });
-
-  // Mocked models for cascading selects (Sistema -> Módulo/Versão) and Clientes
-  const systemsData: Record<string, { modules: string[]; versions: string[] }> = {
-    PGDI: {
-      modules: ["PAP", "Ocorrências", "Online", "RTA"],
-      versions: ["2.38.0", "2.38.1"],
-    },
-    PCP: {
-      modules: ["Relatórios", "Planejamento", "Configurações", "Premissas"],
-      versions: ["2.38.1", "2.39.0"],
-    },
-  };
-  const clientsMock = [
-    "Cliente A",
-    "Cliente B",
-    "Cliente C",
-  ];
+  // Opções (via API)
+  const { data: systems = [] } = useQuery({ queryKey: ["cfg","systems"], queryFn: getSystems });
+  const { data: areas = [] } = useQuery({ queryKey: ["cfg","areas"], queryFn: getAreas });
+  const { data: clients = [] } = useQuery({ queryKey: ["cfg","clients"], queryFn: getClients });
+  const { data: units = [] } = useQuery({ queryKey: ["cfg","units"], queryFn: getUnits });
+  const { data: versions = [] } = useQuery({ queryKey: ["cfg","versions", formData.systemId], queryFn: () => formData.systemId ? getVersions(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
+  const { data: modules = [] } = useQuery({ queryKey: ["cfg","modules", formData.systemId], queryFn: () => formData.systemId ? getModules(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -78,17 +73,31 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Generate protocol number
-    const protocol = `2025-${String(
-      Math.floor(Math.random() * 999999) + 100000
-    ).padStart(6, "0")}`;
-    setGeneratedProtocol(protocol);
-    setIsSubmitted(true);
-    setIsSubmitting(false);
+    try {
+      const payload = {
+        description: formData.description,
+        observation: formData.observation || undefined,
+        module: formData.module,
+        requesterResponsible: formData.responsible || "",
+        reporterArea: formData.area,
+        occurrenceType: (formData.type || "") as unknown as OccurrenceType,
+        unit: formData.unit || "",
+        classification: (formData.classification || "Baixo") as unknown as Classification,
+        client: formData.client || undefined,
+        priority: undefined,
+        systemVersion: formData.version || undefined,
+        reporter: undefined,
+        productModule: undefined,
+        documentUrl: formData.document || undefined,
+        order: undefined,
+        reporterEmail: undefined,
+      };
+      const res = await createDemand(payload);
+      setGeneratedProtocol(res.protocol);
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
@@ -114,7 +123,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
           </div>
           <Alert>
             <AlertDescription>
-              Um e-mail de confirmação foi enviado com o número do protocolo e
+              Um e-mail de confirmaÃ§Ã£o foi enviado com o número do protocolo e
               detalhes da solicitação.
             </AlertDescription>
           </Alert>
@@ -135,23 +144,24 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     );
   }
 
+  const fieldClass = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-teal-500 focus-visible:border-teal-500 placeholder:text-slate-400";
+  const triggerClass = "w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus-visible:ring-teal-500 focus-visible:border-teal-500";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full min-h-[calc(100vh-64px)] px-0 py-6 pr-6"
+      className="w-full px-0 py-2"
     >
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">
           Informações da Demanda
         </h2>
         <p className="text-slate-600">
-          Preencha todos os campos obrigatórios para registrar sua solicitação
+          Preencha todos os campos Obrigatórios para registrar sua solicitação
         </p>
       </div>
 
-      <div
-        className="grid grid-cols-12 gap-4"
-      >
+      <div className="grid grid-cols-12 gap-4">
         {/* Selecionais primeiro */}
         
 
@@ -177,7 +187,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    implementação de algo novo ou evolução
+                    implementação de algo novo ou evoluÃ§Ã£o
                   </TooltipContent>
                 </Tooltip>
               </Label>
@@ -219,19 +229,19 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             Sistema <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={formData.system}
+            value={formData.systemId}
             onValueChange={(value) => {
               // Reset dependents when changing Sistema
               setFormData((prev) => ({ ...prev, system: value, module: "", version: "" }));
             }}
             required
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={triggerClass}>
               <SelectValue placeholder="Selecione o sistema" />
             </SelectTrigger>
             <SelectContent>
-              {Object.keys(systemsData).map((sys) => (
-                <SelectItem key={sys} value={sys}>{sys}</SelectItem>
+              {systems.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -243,17 +253,17 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             Módulo <span className="text-red-500">*</span>
           </Label>
           <Select
-            disabled={!formData.system}
+            disabled={!formData.systemId}
             value={formData.module}
             onValueChange={(value) => handleInputChange("module", value)}
             required
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={formData.system ? "Selecione o módulo" : "Selecione primeiro o sistema"} />
+            <SelectTrigger className={triggerClass}>
+              <SelectValue placeholder={formData.systemId ? "Selecione o módulo" : "Selecione primeiro o sistema"} />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system ? systemsData[formData.system].modules : []).map((mod) => (
-                <SelectItem key={mod} value={mod}>{mod}</SelectItem>
+              {(modules || []).map((m) => (
+                <SelectItem key={m.id} value={m.name}>{m.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -263,17 +273,17 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">Versão do Sistema</Label>
           <Select
-            disabled={!formData.system}
+            disabled={!formData.systemId}
             value={formData.version}
             onValueChange={(value) => handleInputChange("version", value)}
             required
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={formData.system ? "Selecione a versão" : "Selecione primeiro o sistema"} />
+            <SelectTrigger className={triggerClass}>
+              <SelectValue placeholder={formData.systemId ? "Selecione a versão" : "Selecione primeiro o sistema"} />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system ? systemsData[formData.system].versions : []).map((ver) => (
-                <SelectItem key={ver} value={ver}>{ver}</SelectItem>
+              {(versions || []).map((v) => (
+                <SelectItem key={v.id} value={v.version}>{v.version}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -289,14 +299,13 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             onValueChange={(value) => handleInputChange("area", value)}
             required
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={triggerClass}>
               <SelectValue placeholder="Selecione a área" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-              <SelectItem value="Engenharia">Engenharia</SelectItem>
-              <SelectItem value="PMO">PMO</SelectItem>
-              <SelectItem value="CX">CX</SelectItem>
+              {areas.map((a) => (
+                <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -308,12 +317,30 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             value={formData.client}
             onValueChange={(value) => handleInputChange("client", value)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={triggerClass}>
               <SelectValue placeholder="Selecione o cliente" />
             </SelectTrigger>
             <SelectContent>
-              {clientsMock.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
+              {clients.map((c) => (
+                <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Unidade */}
+        <div className="space-y-2 col-span-12 md:col-span-6">
+          <Label className="text-slate-700">Unidade</Label>
+          <Select
+            value={formData.unit}
+            onValueChange={(value) => handleInputChange("unit", value)}
+          >
+            <SelectTrigger className={triggerClass}>
+              <SelectValue placeholder="Selecione a unidade" />
+            </SelectTrigger>
+            <SelectContent>
+              {units.map((u) => (
+                <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -391,14 +418,14 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             onChange={(e) => handleInputChange("description", e.target.value)}
             required
             rows={4}
-            className="resize-none col-span-12"
+            className={`resize-none col-span-12 ${fieldClass}`}
           />
         </div>
 
         {/* Anexos */}
         <div className="space-y-2 col-span-12">
           <Label className="text-slate-700">Anexos</Label>
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center col-span-12">
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center col-span-12 bg-white dark:bg-slate-900">
             <Upload className="mx-auto h-8 w-8 text-slate-400 mb-2" />
             <p className="text-slate-600 mb-2">
               Clique para selecionar arquivos ou arraste aqui
@@ -468,7 +495,7 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
             value={formData.observation}
             onChange={(e) => handleInputChange("observation", e.target.value)}
             rows={3}
-            className="resize-none"
+            className={`resize-none ${fieldClass}`}
           />
         </div>
       </div>
@@ -490,3 +517,13 @@ export function NewDemandForm({ currentUserId }: { currentUserId?: string }) {
     </form>
   );
 }
+
+
+
+
+
+
+
+
+
+

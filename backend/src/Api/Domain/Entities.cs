@@ -10,7 +10,14 @@ public class User
     public string PasswordHash { get; set; } = default!;
     public bool Active { get; set; } = true;
     public string Role { get; set; } = "Colaborador";
-    public Permission Permissions { get; set; }
+    // Área vinculada ao usuário (opcional)
+    public Guid? AreaId { get; set; }
+    public Area? Area { get; set; }
+    // Perfil associado (opcional)
+    public Guid? ProfileId { get; set; }
+    public Profile? Profile { get; set; }
+    // Indica que as permissões do usuário diferem das do perfil
+    public bool IsSpecial { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -73,4 +80,101 @@ public class ProtocolCounter
     public int Id { get; set; }
     public int Year { get; set; }
     public int LastNumber { get; set; }
+}
+
+public class PermissionEntity
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(80)] public string Code { get; set; } = default!; // deve coincidir com enum Permission
+    [MaxLength(120)] public string Name { get; set; } = default!;
+    [MaxLength(200)] public string Category { get; set; } = default!;
+    [MaxLength(400)] public string? Description { get; set; }
+    public bool Active { get; set; } = true;
+
+    public ICollection<UserPermission> Users { get; set; } = [];
+}
+
+public class UserPermission
+{
+    public Guid UserId { get; set; }
+    public User User { get; set; } = default!;
+    public Guid PermissionId { get; set; }
+    public PermissionEntity Permission { get; set; } = default!;
+    public bool Granted { get; set; } = true;
+}
+
+public class Profile
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(120)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+    // Optional Tailwind-like classes to style profile badge in UI
+    [MaxLength(200)] public string? BadgeClass { get; set; }
+
+    public ICollection<ProfilePermission> Permissions { get; set; } = [];
+}
+
+public class ProfilePermission
+{
+    public Guid ProfileId { get; set; }
+    public Profile Profile { get; set; } = default!;
+    public Guid PermissionId { get; set; }
+    public PermissionEntity Permission { get; set; } = default!;
+    public bool Granted { get; set; } = true;
+}
+
+// Configurações de formulário
+public class Area
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(120)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+}
+
+public class Client
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(160)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+}
+
+public class Unit
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(120)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+}
+
+public class StatusConfig
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(120)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+}
+
+public class SystemEntity
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(160)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+    public ICollection<SystemVersion> Versions { get; set; } = [];
+    public ICollection<ModuleEntity> Modules { get; set; } = [];
+}
+
+public class SystemVersion
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(60)] public string Version { get; set; } = default!;
+    public bool Active { get; set; } = true;
+    public Guid SystemEntityId { get; set; }
+    public SystemEntity System { get; set; } = default!;
+}
+
+public class ModuleEntity
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(160)] public string Name { get; set; } = default!;
+    public bool Active { get; set; } = true;
+    public Guid SystemEntityId { get; set; }
+    public SystemEntity System { get; set; } = default!;
 }

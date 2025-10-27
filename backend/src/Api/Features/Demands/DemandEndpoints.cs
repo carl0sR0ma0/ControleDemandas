@@ -5,6 +5,7 @@ using Api.Security;
 using Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Api.Filters;
 
 namespace Api.Features.Demands;
 
@@ -110,7 +111,8 @@ public static class DemandEndpoints
                     $"<p>Sua solicitação foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
 
             return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
-        });
+        })
+        .AddEndpointFilter(new ValidationFilter<CreateDemandDto>());
 
         g.MapPost("/{id:guid}/attachments", async (Guid id, AppDbContext db, HttpRequest req,
             FileStorageService fs, CancellationToken ct) =>
@@ -153,7 +155,8 @@ public static class DemandEndpoints
 
             await db.SaveChangesAsync();
             return Results.NoContent();
-        });
+        })
+        .AddEndpointFilter(new ValidationFilter<UpdateDemandDto>());
 
         g.MapPost("/{id:guid}/status", [Authorize(Policy = "PERM:" + nameof(Permission.EditarStatus))] async (
             Guid id, AppDbContext db, ChangeStatusDto dto, ClaimsPrincipal user) =>
@@ -171,7 +174,8 @@ public static class DemandEndpoints
 
             await db.SaveChangesAsync();
             return Results.Ok(new { d.Id, d.Status });
-        });
+        })
+        .AddEndpointFilter(new ValidationFilter<ChangeStatusDto>());
 
         return app;
     }

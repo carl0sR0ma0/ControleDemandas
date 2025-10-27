@@ -31,6 +31,21 @@ Usuário seedado:
 - `GET /public/protocol/{protocol}`
 - `GET /users` etc.
 
+## Inicialização (/init)
+- `POST /init`: aplica migrations, garante pasta `storage/` e semente inicial.
+  - Em `Development`: liberado sem token.
+  - Em outros ambientes: requer `?token=SEU_TOKEN` e configuração `Init:Token` em `appsettings`.
+  - Resposta: `{ status: "ok", environment: "...", actions: [ ... ] }`.
+
+## Health checks
+- `GET /health`: liveness simples.
+- `GET /healthz`: padrão de health checks.
+- `GET /health/db`: verifica conectividade com o banco (EF Core).
+
+## Erros (ProblemDetails)
+- Respostas de erro seguem o padrão `application/problem+json`.
+- Validações usam FluentValidation e retornam `ValidationProblem` (400) com detalhes por campo.
+
 ## Configurações
 - Ajuste `appsettings.json` (`ConnectionStrings`, `Jwt.SigningKey`, `Cors.Origin`, `Smtp`).
 

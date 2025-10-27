@@ -1,12 +1,12 @@
 {
-  "name": "my-v0-project",
+  "name": "controle-demandas",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -p 5177",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start -p 5177"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

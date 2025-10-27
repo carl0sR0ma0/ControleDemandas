@@ -1,12 +1,25 @@
 "use client";
 
 import axios from "axios";
+import { getApiBaseUrl } from "@/lib/env";
+import * as nodeHttp from "http";
+import * as nodeHttps from "https";
 
-// Em Next, use NEXT_PUBLIC_*
-const baseURL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const baseURL = getApiBaseUrl();
 
-export const http = axios.create({ baseURL });
+// Mantém conexões HTTP/TLS abertas entre múltiplas requisições durante SSR (Node)
+// Reduz latência por handshakes repetidos em páginas que fazem várias chamadas.
+const isHttps = baseURL.startsWith("https://");
+const keepAliveAgent = isHttps
+  ? new nodeHttps.Agent({ keepAlive: true })
+  : new nodeHttp.Agent({ keepAlive: true });
+
+export const http = axios.create({
+  baseURL,
+  timeout: 15000,
+  httpAgent: keepAliveAgent,
+  httpsAgent: keepAliveAgent,
+});
 
 // Interceptor: injeta Authorization se houver token (apenas no client)
 http.interceptors.request.use((config) => {

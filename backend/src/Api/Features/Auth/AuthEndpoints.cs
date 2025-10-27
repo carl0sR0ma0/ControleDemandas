@@ -3,6 +3,7 @@ using Api.Persistence;
 using Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Api.Filters;
 
 namespace Api.Features.Auth;
 
@@ -18,9 +19,22 @@ public static class AuthEndpoints
             if (user is null || !user.Active || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Results.Unauthorized();
 
-            var token = JwtToken.Create(user, jwt);
-            return Results.Ok(new { token, user = new { user.Id, user.Name, user.Email, user.Role, permissions = (long)user.Permissions } });
-        });
+            // Compute permission mask from join table
+            long mask = 0;
+            var ups = await db.UserPermissions
+                .Include(x => x.Permission)
+                .Where(x => x.UserId == user.Id && x.Granted)
+                .ToListAsync();
+            foreach (var up in ups)
+            {
+                if (Enum.TryParse<Permission>(up.Permission.Code, out var p))
+                    mask |= (long)p;
+            }
+
+            var token = JwtToken.Create(user, mask, jwt);
+            return Results.Ok(new { token, user = new { user.Id, user.Name, user.Email, user.Role, permissions = mask } });
+        })
+        .AddEndpointFilter(new ValidationFilter<LoginDto>());
 
         g.MapPost("/register", [Authorize(Policy = "PERM:" + nameof(Permission.GerenciarUsuarios))] async (AppDbContext db, CreateUserDto dto) =>
         {
@@ -29,13 +43,27 @@ public static class AuthEndpoints
                 Name = dto.Name,
                 Email = dto.Email.ToLowerInvariant(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Role = dto.Role,
-                Permissions = dto.Permissions
+                Role = dto.Role
             };
             db.Users.Add(u);
             await db.SaveChangesAsync();
+
+            // Persist permissions in join table based on provided bitmask
+            foreach (Permission p in Enum.GetValues(typeof(Permission)))
+            {
+                if (p == Permission.None) continue;
+                if (dto.Permissions.HasFlag(p))
+                {
+                    var code = p.ToString();
+                    var perm = await db.Permissions.SingleOrDefaultAsync(x => x.Code == code);
+                    if (perm != null)
+                        db.UserPermissions.Add(new UserPermission { UserId = u.Id, PermissionId = perm.Id, Granted = true });
+                }
+            }
+            await db.SaveChangesAsync();
             return Results.Created($"/users/{u.Id}", new { u.Id });
-        });
+        })
+        .AddEndpointFilter(new ValidationFilter<CreateUserDto>());
 
         return app;
     }

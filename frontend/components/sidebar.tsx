@@ -73,13 +73,11 @@ export function Sidebar() {
     { icon: FileText, label: "Demandas", href: "/demandas" },
     { icon: Plus, label: "Nova Demanda", href: "/demandas/nova" },
     { icon: Search, label: "Consultar Protocolo", href: "/consultar" },
-    ...(canUsers
-      ? [
-          { icon: Users, label: "Usuários", href: "/usuarios" },
-          { icon: Shield, label: "Permissões", href: "/permissoes" },
-        ]
-      : []),
+    ...(canUsers ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
   ];
+  if (canUsers) {
+    menuItems.push({ icon: Shield, label: "Perfis", href: "/perfis" });
+  }
 
   return (
     <div

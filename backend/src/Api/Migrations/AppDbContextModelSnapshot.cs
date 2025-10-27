@@ -23,6 +23,28 @@ namespace Api.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "uuid-ossp");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Api.Domain.Area", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Areas");
+                });
+
             modelBuilder.Entity("Api.Domain.Attachment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -55,6 +77,28 @@ namespace Api.Migrations
                     b.HasIndex("DemandId");
 
                     b.ToTable("Attachments");
+                });
+
+            modelBuilder.Entity("Api.Domain.Client", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Clients");
                 });
 
             modelBuilder.Entity("Api.Domain.Demand", b =>
@@ -148,6 +192,167 @@ namespace Api.Migrations
                     b.ToTable("Demands");
                 });
 
+            modelBuilder.Entity("Api.Domain.ModuleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<Guid>("SystemEntityId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SystemEntityId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Modules");
+                });
+
+            modelBuilder.Entity("Api.Domain.PermissionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Active = true,
+                            Category = "Dashboard",
+                            Code = "AcessarDashboard",
+                            Description = "Acesso ao painel principal",
+                            Name = "Acessar Dashboard"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111112"),
+                            Active = true,
+                            Category = "Demandas",
+                            Code = "VisualizarDemandas",
+                            Description = "Ver lista e detalhes das demandas",
+                            Name = "Visualizar Demandas"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111113"),
+                            Active = true,
+                            Category = "Demandas",
+                            Code = "RegistrarDemandas",
+                            Description = "Criar novas demandas",
+                            Name = "Registrar Demandas"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111114"),
+                            Active = true,
+                            Category = "Demandas",
+                            Code = "EditarStatus",
+                            Description = "Alterar status/histórico",
+                            Name = "Editar Status"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111115"),
+                            Active = true,
+                            Category = "Demandas",
+                            Code = "Aprovar",
+                            Description = "Aprovar para execução",
+                            Name = "Aprovar Demandas"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111116"),
+                            Active = true,
+                            Category = "Sistema",
+                            Code = "GerenciarUsuarios",
+                            Description = "Criar/editar usuários",
+                            Name = "Gerenciar Usuários"
+                        });
+                });
+
+            modelBuilder.Entity("Api.Domain.Profile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("BadgeClass")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Profiles");
+                });
+
+            modelBuilder.Entity("Api.Domain.ProfilePermission", b =>
+                {
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Granted")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ProfileId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("ProfilePermissions");
+                });
+
             modelBuilder.Entity("Api.Domain.ProtocolCounter", b =>
                 {
                     b.Property<int>("Id")
@@ -165,6 +370,28 @@ namespace Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProtocolCounters");
+                });
+
+            modelBuilder.Entity("Api.Domain.StatusConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("Api.Domain.StatusHistory", b =>
@@ -197,6 +424,75 @@ namespace Api.Migrations
                     b.ToTable("StatusHistory");
                 });
 
+            modelBuilder.Entity("Api.Domain.SystemEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Systems");
+                });
+
+            modelBuilder.Entity("Api.Domain.SystemVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("SystemEntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SystemEntityId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("SystemVersions");
+                });
+
+            modelBuilder.Entity("Api.Domain.Unit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Units");
+                });
+
             modelBuilder.Entity("Api.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -206,6 +502,9 @@ namespace Api.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("AreaId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -213,6 +512,9 @@ namespace Api.Migrations
                         .IsRequired()
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
+
+                    b.Property<bool>("IsSpecial")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -223,8 +525,8 @@ namespace Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<long>("Permissions")
-                        .HasColumnType("bigint");
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -232,22 +534,125 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AreaId");
+
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("ProfileId");
 
                     b.ToTable("Users");
 
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f59e21ca-cfcf-4b56-b221-17525b419a6e"),
+                            Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 1, 0, 1, 29, 913, DateTimeKind.Utc).AddTicks(8691),
+                            CreatedAt = new DateTime(2025, 10, 27, 1, 25, 39, 869, DateTimeKind.Utc).AddTicks(9399),
                             Email = "admin@empresa.com",
+                            IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$pVezYjWEgtNJD0ekEqkXQemZXFfKdq.Ajw1NaCIaVqmT8i0oLd3u.",
-                            Permissions = 63L,
+                            PasswordHash = "$2a$11$GH4DqHE8Z0lE3xUmsWSXqujr.lAylJxI/0wcQR9sMiHHT2GpKk7ji",
+                            ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
                             Role = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            Active = true,
+                            CreatedAt = new DateTime(2025, 10, 27, 1, 25, 40, 132, DateTimeKind.Utc).AddTicks(8432),
+                            Email = "gestor@empresa.com",
+                            IsSpecial = false,
+                            Name = "Gestor",
+                            PasswordHash = "$2a$11$vCcXU4f7SMGvIIAr2dFLne80jQiF8wbWKLJwZTWU2rXtJg0RFJhMC",
+                            ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            Role = "Gestor"
+                        });
+                });
+
+            modelBuilder.Entity("Api.Domain.UserPermission", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Granted")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("UserId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("UserPermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111112"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111113"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111114"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111115"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111116"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111112"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111113"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111114"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111115"),
+                            Granted = true
                         });
                 });
 
@@ -262,6 +667,36 @@ namespace Api.Migrations
                     b.Navigation("Demand");
                 });
 
+            modelBuilder.Entity("Api.Domain.ModuleEntity", b =>
+                {
+                    b.HasOne("Api.Domain.SystemEntity", "System")
+                        .WithMany("Modules")
+                        .HasForeignKey("SystemEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("System");
+                });
+
+            modelBuilder.Entity("Api.Domain.ProfilePermission", b =>
+                {
+                    b.HasOne("Api.Domain.PermissionEntity", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Api.Domain.Profile", "Profile")
+                        .WithMany("Permissions")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Profile");
+                });
+
             modelBuilder.Entity("Api.Domain.StatusHistory", b =>
                 {
                     b.HasOne("Api.Domain.Demand", "Demand")
@@ -273,11 +708,75 @@ namespace Api.Migrations
                     b.Navigation("Demand");
                 });
 
+            modelBuilder.Entity("Api.Domain.SystemVersion", b =>
+                {
+                    b.HasOne("Api.Domain.SystemEntity", "System")
+                        .WithMany("Versions")
+                        .HasForeignKey("SystemEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("System");
+                });
+
+            modelBuilder.Entity("Api.Domain.User", b =>
+                {
+                    b.HasOne("Api.Domain.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Api.Domain.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Area");
+
+                    b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("Api.Domain.UserPermission", b =>
+                {
+                    b.HasOne("Api.Domain.PermissionEntity", "Permission")
+                        .WithMany("Users")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Api.Domain.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Api.Domain.Demand", b =>
                 {
                     b.Navigation("Attachments");
 
                     b.Navigation("History");
+                });
+
+            modelBuilder.Entity("Api.Domain.PermissionEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Api.Domain.Profile", b =>
+                {
+                    b.Navigation("Permissions");
+                });
+
+            modelBuilder.Entity("Api.Domain.SystemEntity", b =>
+                {
+                    b.Navigation("Modules");
+
+                    b.Navigation("Versions");
                 });
 #pragma warning restore 612, 618
         }

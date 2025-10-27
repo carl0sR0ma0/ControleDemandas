@@ -9,7 +9,7 @@ public enum DemandStatus
     Concluida = 5
 }
 
-[System.Flags]
+[Flags]
 public enum Permission : long
 {
     None = 0,
