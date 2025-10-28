@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCards, getPorArea, getPorModulo, getPorResponsavel, getPorStatus } from "@/lib/api/dashboard";
+import { getCards, getPorArea, getPorModulo, getPorUnidade, getPorStatus } from "@/lib/api/dashboard";
 import type { DashboardCards } from "../types/api";
 
 export function useDashboardCards() {
@@ -38,11 +38,11 @@ export function useDemandasPorModulo() {
   });
 }
 
-export function useDemandasPorResponsavel() {
+export function useDemandasPorUnidade() {
   return useQuery({
-    queryKey: ["dashboard", "por-responsavel"],
+    queryKey: ["dashboard", "por-unidade"],
     queryFn: async () => {
-      return await getPorResponsavel();
+      return await getPorUnidade();
     },
   });
 }

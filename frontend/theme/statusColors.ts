@@ -10,6 +10,8 @@ export const COLORS = {
 
 export function colorByStatus(s: DemandStatus): string {
   switch (s) {
+    case DemandStatus.Aberta:
+      return COLORS.primary;
     case DemandStatus.Ranqueado:
       return COLORS.primary; // Em Aberto
     case DemandStatus.AguardandoAprovacao:
@@ -27,6 +29,7 @@ export function colorByStatus(s: DemandStatus): string {
 
 export const statusLabel = (s: DemandStatus) =>
   ({
+    [DemandStatus.Aberta]: "Aberta",
     [DemandStatus.Ranqueado]: "Ranqueado (Em Aberto)",
     [DemandStatus.AguardandoAprovacao]: "Aguardando Aprovação",
     [DemandStatus.Execucao]: "Execução",

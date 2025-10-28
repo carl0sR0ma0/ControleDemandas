@@ -17,6 +17,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -80,6 +82,12 @@ builder.Services.AddProblemDetails(opts =>
     {
         ctx.ProblemDetails.Extensions["traceId"] = ctx.HttpContext.TraceIdentifier;
     };
+});
+
+// JSON: serialize enums as their original names (db remains int)
+builder.Services.ConfigureHttpJsonOptions(opts =>
+{
+    opts.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 // Health checks

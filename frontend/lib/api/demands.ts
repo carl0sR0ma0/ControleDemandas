@@ -33,8 +33,23 @@ const toQuery = (f: DemandListFilters) =>
 
 export async function listDemands(filters: DemandListFilters) {
   const q = toQuery({ page: 1, size: 20, ...filters });
-  const { data } = await http.get<DemandListResponse>(`/demands?${q}`);
-  return data;
+  const { data } = await http.get<any>(`/demands?${q}`);
+  // map backend shape -> frontend types
+  const items: DemandListItem[] = (data.items ?? []).map((x: any) => ({
+    id: x.id,
+    protocol: x.protocol,
+    openedAt: x.openedAt,
+    occurrenceType: x.occurrenceType,
+    module: x.module?.name ?? "",
+    reporterArea: x.reporterArea?.name ?? "",
+    classification: x.classification,
+    status: x.status,
+    requester: x.requester?.name ?? "",
+    nextActionResponsible: x.nextActionResponsible ?? null,
+    estimatedDelivery: x.estimatedDelivery ?? null,
+    documentUrl: x.documentUrl ?? null,
+  }));
+  return { total: data.total ?? items.length, page: data.page ?? 1, size: data.size ?? items.length, items };
 }
 
 export async function getDemand(id: string) {

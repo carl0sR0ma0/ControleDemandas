@@ -24,14 +24,14 @@ import {
   useDemandasPorStatus,
   useDemandasPorArea,
   useDemandasPorModulo,
-  useDemandasPorResponsavel,
+  useDemandasPorUnidade,
 } from "@/hooks/useDashboard";
 
 export function DashboardCharts() {
   const { data: byStatus } = useDemandasPorStatus();
   const { data: byArea } = useDemandasPorArea();
   const { data: byModulo } = useDemandasPorModulo();
-  const { data: byResponsavel } = useDemandasPorResponsavel();
+  const { data: byUnidade } = useDemandasPorUnidade();
 
   // mapear para o formato do seu chart
   const statusData = (byStatus ?? []).map((s) => ({
@@ -52,11 +52,10 @@ export function DashboardCharts() {
     fill: "#606062",
   }));
 
-  // para responsável, o endpoint retorna só contagem por responsável;
-  // se quiser empilhar por tipo (Incremental/Melhoria/Bug), fazemos depois
-  const responsavelData = (byResponsavel ?? []).map((c) => ({
-    name: c.responsavel ?? "—",
-    Total: c.qtde,
+  // por unidade
+  const unidadeData = (byUnidade ?? []).map((u) => ({
+    name: u.unidade ?? "—",
+    Total: u.qtde,
   }));
 
   const CustomTooltip = ({
@@ -200,18 +199,18 @@ export function DashboardCharts() {
         </CardContent>
       </Card>
 
-      {/* por Responsável (total) */}
+      {/* por Unidade (total) */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-slate-800">
-            Demandas por Responsável
+            Demandas por Unidades
           </CardTitle>
-          <CardDescription>Quantidade por responsável</CardDescription>
+          <CardDescription>Quantidade por unidade</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart
-              data={responsavelData}
+              data={unidadeData}
               margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -227,3 +226,4 @@ export function DashboardCharts() {
     </div>
   );
 }
+

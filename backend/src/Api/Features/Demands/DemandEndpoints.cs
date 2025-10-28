@@ -178,7 +178,7 @@ public static class DemandEndpoints
 
             d.History.Add(new StatusHistory
             {
-                Status = DemandStatus.Ranqueado,
+                Status = DemandStatus.Aberta,
                 Author = user.Identity?.Name ?? "sistema",
                 Note = "Abertura da demanda"
             });

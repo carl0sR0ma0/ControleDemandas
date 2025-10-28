@@ -56,6 +56,10 @@ public static class DashboardEndpoints
                 .GroupBy(d => d.Responsible!)
                 .Select(g => new { responsavel = g.Key, qtde = g.Count() }).ToListAsync());
 
+        g.MapGet("/por-unidade", async (AppDbContext db) =>
+            await db.Demands.GroupBy(d => d.Unit.Name)
+                .Select(g => new { unidade = g.Key, qtde = g.Count() }).ToListAsync());
+
         return app;
     }
 }

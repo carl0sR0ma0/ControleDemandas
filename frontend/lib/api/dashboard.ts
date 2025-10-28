@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { DashboardCards } from "@/types/api";
+import type { DashboardCards, DemandStatus } from "@/types/api";
 
 export async function getCards() {
   const { data } = await http.get<DashboardCards>("/dashboard/cards");
@@ -7,7 +7,7 @@ export async function getCards() {
 }
 
 export async function getPorStatus() {
-  const { data } = await http.get<{ status: number; qtde: number }[]>("/dashboard/por-status");
+  const { data } = await http.get<{ status: DemandStatus; qtde: number }[]>("/dashboard/por-status");
   return data;
 }
 
@@ -21,8 +21,8 @@ export async function getPorModulo() {
   return data;
 }
 
-export async function getPorResponsavel() {
-  const { data } = await http.get<{ responsavel: string; qtde: number }[]>("/dashboard/por-responsavel");
+export async function getPorUnidade() {
+  const { data } = await http.get<{ unidade: string; qtde: number }[]>("/dashboard/por-unidade");
   return data;
 }
 

@@ -44,7 +44,7 @@ public class Demand
     [MaxLength(120)] public string? Responsible { get; set; }
     public Guid? SystemVersionId { get; set; }
     public SystemVersion? SystemVersion { get; set; }
-    public DemandStatus Status { get; set; } = DemandStatus.Ranqueado;
+    public DemandStatus Status { get; set; } = DemandStatus.Aberta;
     [MaxLength(120)] public string? NextActionResponsible { get; set; }
     public DateTime? EstimatedDelivery { get; set; }
     public string? DocumentUrl { get; set; }

@@ -2,6 +2,7 @@ namespace Api.Domain;
 
 public enum DemandStatus
 {
+    Aberta = 0,
     Ranqueado = 1,
     AguardandoAprovacao = 2,
     Execucao = 3,

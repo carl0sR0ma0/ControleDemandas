@@ -1,20 +1,21 @@
 export enum DemandStatus {
-  Ranqueado = 1,
-  AguardandoAprovacao = 2,
-  Execucao = 3,
-  Validacao = 4,
-  Concluida = 5,
+  Aberta = "Aberta",
+  Ranqueado = "Ranqueado",
+  AguardandoAprovacao = "AguardandoAprovacao",
+  Execucao = "Execucao",
+  Validacao = "Validacao",
+  Concluida = "Concluida",
 }
 
 export enum OccurrenceType {
-  Incremental = 1,
-  Melhoria = 2,
-  Bug = 3,
+  Incremental = "Incremental",
+  Melhoria = "Melhoria",
+  Bug = "Bug",
 }
 export enum Classification {
-  Urgente = 1,
-  Medio = 2,
-  Baixo = 3,
+  Urgente = "Urgente",
+  Medio = "Medio",
+  Baixo = "Baixo",
 }
 
 export type Permission =
@@ -47,6 +48,7 @@ export interface DemandListItem {
   reporterArea: string;
   classification: Classification;
   status: DemandStatus;
+  requester?: string; // nome de quem abriu a demanda
   nextActionResponsible?: string | null;
   estimatedDelivery?: string | null;
   documentUrl?: string | null;

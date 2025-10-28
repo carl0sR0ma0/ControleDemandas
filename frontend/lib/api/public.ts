@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { DemandStatus } from "@/types/api";
+import type { DemandStatus, OccurrenceType } from "@/types/api";
 
 interface PublicStep {
   status: DemandStatus;
@@ -11,7 +11,7 @@ interface PublicStep {
 export interface PublicProtocolResponse {
   protocol: string;
   openedAt: string;
-  occurrenceType: number;
+  occurrenceType: OccurrenceType;
   observation?: string | null;
   status: DemandStatus;
   steps: PublicStep[];
@@ -21,4 +21,3 @@ export async function getProtocol(protocol: string) {
   const { data } = await http.get<PublicProtocolResponse>(`/public/protocol/${protocol}`);
   return data;
 }
-
