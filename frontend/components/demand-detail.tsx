@@ -107,11 +107,6 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     return <EditDemandForm protocol={demand.protocol} currentUserId="user-123" />
   }
 
-  // Debug: log para verificar estrutura dos dados
-  console.log("Demand data:", demand)
-  console.log("Demand system:", demand.system)
-  console.log("Demand module:", demand.module)
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,8 +119,7 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Demanda #{demand.protocol}</h1>
-            <p className="text-slate-600 mt-1">Detalhes da solicitação</p>
+            <h1 className="text-3xl font-bold text-slate-800">Detalhes da solicitação</h1>
           </div>
         </div>
         <div className="flex gap-2">

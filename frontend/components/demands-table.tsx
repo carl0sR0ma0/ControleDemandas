@@ -26,13 +26,6 @@ export function DemandsTable() {
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 
-  // Debug: log para verificar estrutura dos dados
-  if (items.length > 0) {
-    console.log("First demand item:", items[0]);
-    console.log("Module type:", typeof items[0].module, items[0].module);
-    console.log("ReporterArea type:", typeof items[0].reporterArea, items[0].reporterArea);
-  }
-
   const onRowDoubleClick = (protocol: string) => {
     router.push(`/demandas/${protocol}`);
   };

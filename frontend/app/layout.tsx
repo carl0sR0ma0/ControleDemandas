@@ -1,8 +1,6 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { Suspense } from "react";
 import "./globals.css";
 import { LayoutWrapper } from "@/components/layout-wrapper";
 import Providers from "@/app/providers"; // ⬅️ adiciona o provider
@@ -25,11 +23,8 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`font-sans ${inter.variable} antialiased`}>
         <Providers>
-          <Suspense fallback={null}>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </Suspense>
+          <LayoutWrapper>{children}</LayoutWrapper>
         </Providers>
-        <Analytics />
       </body>
     </html>
   );
