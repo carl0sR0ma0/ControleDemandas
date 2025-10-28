@@ -43,12 +43,14 @@ export interface DemandListItem {
   protocol: string;
   openedAt: string;
   occurrenceType: OccurrenceType;
-  module: string;
-  client?: string | null;
-  reporterArea: string;
+  module?: { id: string; name: string } | null;
+  reporterArea?: { id: string; name: string } | null;
+  unit?: { id: string; name: string } | null;
+  systemVersion?: { id: string; version: string } | null;
+  requester?: { id: string; name: string; email: string } | null;
+  responsible?: string | null;
   classification: Classification;
   status: DemandStatus;
-  requester?: string; // nome de quem abriu a demanda
   nextActionResponsible?: string | null;
   estimatedDelivery?: string | null;
   documentUrl?: string | null;
