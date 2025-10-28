@@ -70,6 +70,7 @@ export function ProtocolLookup() {
 
   const getStatusColor = (status: string) => {
     const colors = {
+      Aberta: "bg-[#FFA726] text-white",
       Ranqueado: "bg-[#7CB342] text-white",
       Aprovação: "bg-[#66BB6A] text-white",
       Execução: "bg-[#5C6BC0] text-white",

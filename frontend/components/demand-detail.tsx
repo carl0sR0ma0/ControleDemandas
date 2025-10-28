@@ -23,6 +23,8 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
 
   const getStatusColor = (status: DemandStatus) => {
     switch (status) {
+      case DemandStatus.Aberta:
+        return "bg-[#FFA726] text-white"
       case DemandStatus.Ranqueado:
         return "bg-[#7CB342] text-white"
       case DemandStatus.AguardandoAprovacao:
@@ -290,7 +292,10 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
           <CardDescription>Acompanhe o progresso da sua demanda</CardDescription>
         </CardHeader>
         <CardContent>
-          <StatusStepper currentStatus={getStatusLabel(demand.status)} />
+          <StatusStepper
+            currentStatus={getStatusLabel(demand.status)}
+            history={demand.history || []}
+          />
         </CardContent>
       </Card>
 
@@ -302,7 +307,7 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
       />
 
       {/* Status History */}
-      <StatusHistoryTable protocol={demand.protocol} />
+      <StatusHistoryTable history={demand.history || []} />
     </div>
   )
 }

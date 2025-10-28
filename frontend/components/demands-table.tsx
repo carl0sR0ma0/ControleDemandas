@@ -58,6 +58,8 @@ export function DemandsTable() {
 
   const getStatusColor = (status: DemandStatus) => {
     switch (status) {
+      case DemandStatus.Aberta:
+        return "bg-[#FFA726] text-white";
       case DemandStatus.Ranqueado:
         return "bg-[#7CB342] text-white";
       case DemandStatus.AguardandoAprovacao:

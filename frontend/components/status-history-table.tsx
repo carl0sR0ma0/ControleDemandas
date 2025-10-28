@@ -1,31 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DemandStatus, type StatusHistory } from "@/types/api"
 
 interface StatusHistoryTableProps {
-  protocol: string
+  history: StatusHistory[]
 }
 
-export function StatusHistoryTable({ protocol }: StatusHistoryTableProps) {
-  // Mock data - in real app, fetch from API
-  const history = [
-    {
-      status: "Execução",
-      date: "2025-01-17 10:15",
-      author: "Maria Santos",
-      observation: "Iniciando desenvolvimento da correção",
-    },
-    {
-      status: "Aprovação",
-      date: "2025-01-16 14:20",
-      author: "João Silva",
-      observation: "Demanda aprovada para execução",
-    },
-    {
-      status: "Ranqueado",
-      date: "2025-01-15 09:30",
-      author: "Sistema",
-      observation: "Demanda criada e ranqueada automaticamente",
-    },
-  ]
+const getStatusLabel = (status: DemandStatus) => {
+  switch (status) {
+    case DemandStatus.Aberta:
+      return "Aberta"
+    case DemandStatus.Ranqueado:
+      return "Ranqueado"
+    case DemandStatus.AguardandoAprovacao:
+      return "Aprovação"
+    case DemandStatus.Execucao:
+      return "Execução"
+    case DemandStatus.Validacao:
+      return "Validação"
+    case DemandStatus.Concluida:
+      return "Concluída"
+    default:
+      return status
+  }
+}
+
+export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
+  // Sort history by date descending (most recent first)
+  const sortedHistory = [...history].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
 
   return (
     <Card className="border-0 shadow-sm">
@@ -44,12 +47,12 @@ export function StatusHistoryTable({ protocol }: StatusHistoryTableProps) {
               </tr>
             </thead>
             <tbody>
-              {history.map((entry, index) => (
-                <tr key={index} className="border-b border-slate-100">
-                  <td className="py-3 px-2 font-medium text-slate-800">{entry.status}</td>
+              {sortedHistory.map((entry, index) => (
+                <tr key={entry.id} className="border-b border-slate-100">
+                  <td className="py-3 px-2 font-medium text-slate-800">{getStatusLabel(entry.status)}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{new Date(entry.date).toLocaleString("pt-BR")}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{entry.author}</td>
-                  <td className="py-3 px-2 text-sm text-slate-600">{entry.observation}</td>
+                  <td className="py-3 px-2 text-sm text-slate-600">{entry.note || "—"}</td>
                 </tr>
               ))}
             </tbody>

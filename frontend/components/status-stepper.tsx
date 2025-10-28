@@ -2,19 +2,33 @@
 
 import React from "react"
 import { CheckCircle, Circle, Clock } from "lucide-react"
+import { DemandStatus, type StatusHistory } from "@/types/api"
 
 interface StatusStepperProps {
   currentStatus: string
+  history: StatusHistory[]
 }
 
-export function StatusStepper({ currentStatus }: StatusStepperProps) {
-  const steps = [
-    { name: "Ranqueado", color: "#7CB342", date: "2025-01-15 09:30" },
-    { name: "Aprovação", color: "#66BB6A", date: "2025-01-16 14:20" },
-    { name: "Execução", color: "#5C6BC0", date: "2025-01-17 10:15" },
-    { name: "Validação", color: "#B0BEC5", date: "" },
-    { name: "Concluída", color: "#BDBDBD", date: "" },
+export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
+  const statusOrder = [
+    { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
+    { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#7CB342" },
+    { key: DemandStatus.AguardandoAprovacao, name: "Aprovação", color: "#66BB6A" },
+    { key: DemandStatus.Execucao, name: "Execução", color: "#5C6BC0" },
+    { key: DemandStatus.Validacao, name: "Validação", color: "#B0BEC5" },
+    { key: DemandStatus.Concluida, name: "Concluída", color: "#BDBDBD" },
   ]
+
+  // Map history to get dates for each status
+  const historyMap = new Map(
+    history.map((h) => [h.status, h.date])
+  )
+
+  const steps = statusOrder.map((s) => ({
+    name: s.name,
+    color: s.color,
+    date: historyMap.get(s.key) || "",
+  }))
 
   const currentIndex = steps.findIndex((step) => step.name === currentStatus)
 
