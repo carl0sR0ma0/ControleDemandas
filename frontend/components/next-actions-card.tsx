@@ -10,13 +10,13 @@ import { CalendarIcon, Save } from "lucide-react"
 interface NextActionsCardProps {
   protocol: string
   responsible: string
-  estimatedDate: string
+  estimatedDate?: string
 }
 
 export function NextActionsCard({ protocol, responsible, estimatedDate }: NextActionsCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [newResponsible, setNewResponsible] = useState(responsible)
-  const [newEstimatedDate, setNewEstimatedDate] = useState(estimatedDate)
+  const [newEstimatedDate, setNewEstimatedDate] = useState(estimatedDate || "")
 
   const handleSave = () => {
     // In real app, save to API
@@ -58,7 +58,9 @@ export function NextActionsCard({ protocol, responsible, estimatedDate }: NextAc
                   <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 </div>
               ) : (
-                <p className="font-medium text-slate-800">{new Date(estimatedDate).toLocaleDateString("pt-BR")}</p>
+                <p className="font-medium text-slate-800">
+                  {estimatedDate ? new Date(estimatedDate).toLocaleDateString("pt-BR") : "Não definida"}
+                </p>
               )}
             </div>
           </div>

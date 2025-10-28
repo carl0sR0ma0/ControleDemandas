@@ -56,13 +56,25 @@ export interface DemandListItem {
   documentUrl?: string | null;
 }
 
-export interface DemandDetail extends DemandListItem {
+export interface DemandDetail {
+  id: string;
+  protocol: string;
+  openedAt: string;
   description: string;
   observation?: string | null;
-  requesterResponsible: string;
-  unit: string;
-  systemVersion?: string | null;
-  productModule?: string | null;
+  occurrenceType: OccurrenceType;
+  classification: Classification;
+  status: DemandStatus;
+  system?: { id: string; name: string } | null;
+  module?: { id: string; name: string; systemId: string } | null;
+  reporterArea?: { id: string; name: string } | null;
+  unit?: { id: string; name: string } | null;
+  systemVersion?: { id: string; version: string } | null;
+  requester?: { id: string; name: string; email: string } | null;
+  responsible?: string | null;
+  nextActionResponsible?: string | null;
+  estimatedDelivery?: string | null;
+  documentUrl?: string | null;
   attachments: Attachment[];
   history: StatusHistory[];
 }

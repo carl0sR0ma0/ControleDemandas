@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDemandList } from "@/hooks/useDemands";
-import { OccurrenceType, Classification, DemandStatus } from "@/types/api";
+import { OccurrenceType, Classification, DemandStatus, DemandListItem } from "@/types/api";
 
 export function DemandsTable() {
   const router = useRouter();
@@ -25,6 +25,13 @@ export function DemandsTable() {
   const { data, isLoading } = useDemandList({ page, size, q: searchTerm || undefined });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+
+  // Debug: log para verificar estrutura dos dados
+  if (items.length > 0) {
+    console.log("First demand item:", items[0]);
+    console.log("Module type:", typeof items[0].module, items[0].module);
+    console.log("ReporterArea type:", typeof items[0].reporterArea, items[0].reporterArea);
+  }
 
   const onRowDoubleClick = (protocol: string) => {
     router.push(`/demandas/${protocol}`);
@@ -96,10 +103,10 @@ export function DemandsTable() {
   const getUniqueValues = (key: string) => {
     if (items.length === 0) return [];
 
-    const values = items.map((item: any) => {
+    const values = items.map((item: DemandListItem) => {
       if (!item) return null;
 
-      const val = item[key];
+      const val = item[key as keyof DemandListItem];
 
       // Handle null or undefined
       if (val === null || val === undefined) return null;
@@ -116,7 +123,7 @@ export function DemandsTable() {
 
       // Return primitive values directly
       return val;
-    }).filter((v) => v !== null && v !== undefined && v !== "");
+    }).filter((v: any) => v !== null && v !== undefined && v !== "");
 
     return [...new Set(values)].sort();
   };
@@ -209,7 +216,7 @@ export function DemandsTable() {
   };
 
   // Apply filters (client-side for demo)
-  const filteredItems = items.filter((item) => {
+  const filteredItems = items.filter((item: DemandListItem) => {
     return Object.entries(activeFilters).every(([column, values]) => {
       if (values.length === 0) return true;
 
@@ -219,13 +226,13 @@ export function DemandsTable() {
           itemValue = item.systemVersion?.version || "";
           break;
         case "module":
-          itemValue = item.module.name;
+          itemValue = item.module?.name || "";
           break;
         case "type":
           itemValue = item.occurrenceType;
           break;
         case "area":
-          itemValue = item.reporterArea.name;
+          itemValue = item.reporterArea?.name || "";
           break;
         case "responsible":
           itemValue = item.responsible || "";
@@ -237,7 +244,7 @@ export function DemandsTable() {
           itemValue = getStatusLabel(item.status);
           break;
         case "unit":
-          itemValue = item.unit.name;
+          itemValue = item.unit?.name || "";
           break;
         default:
           return true;
@@ -353,28 +360,56 @@ export function DemandsTable() {
                   <td className="py-6 text-center text-slate-500" colSpan={11}>Nenhuma demanda encontrada.</td>
                 </tr>
               ) : (
-                filteredItems.map((d) => (
+                filteredItems.map((d: DemandListItem) => (
                   <tr
                     key={d.id}
                     className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                     onDoubleClick={() => onRowDoubleClick(d.protocol)}
                   >
-                    <td className="py-3 px-2 font-medium text-[#04A4A1]">{d.protocol}</td>
+                    <td className="py-3 px-2 font-medium text-[#04A4A1]">{String(d.protocol)}</td>
                     <td className="py-3 px-2 text-sm text-slate-600">{new Date(d.openedAt).toLocaleDateString("pt-BR")}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.systemVersion?.version || "—"}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.module?.name || "—"}</td>
-                    <td className="py-3 px-2">
-                      <Badge variant="secondary" className={getTypeColor(d.occurrenceType)}>{d.occurrenceType}</Badge>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.systemVersion && typeof d.systemVersion === 'object' && d.systemVersion.version
+                        ? String(d.systemVersion.version)
+                        : "—"}
                     </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.reporterArea?.name || "—"}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.requester?.name || "—"}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.responsible || "—"}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{d.unit?.name || "—"}</td>
-                    <td className="py-3 px-2">
-                      <Badge className={getClassificationColor(d.classification)}>{d.classification}</Badge>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.module && typeof d.module === 'object' && d.module.name
+                        ? String(d.module.name)
+                        : "—"}
                     </td>
                     <td className="py-3 px-2">
-                      <Badge className={getStatusColor(d.status)}>{getStatusLabel(d.status)}</Badge>
+                      <Badge variant="secondary" className={getTypeColor(d.occurrenceType)}>
+                        {String(d.occurrenceType)}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.reporterArea && typeof d.reporterArea === 'object' && d.reporterArea.name
+                        ? String(d.reporterArea.name)
+                        : "—"}
+                    </td>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.requester && typeof d.requester === 'object' && d.requester.name
+                        ? String(d.requester.name)
+                        : "—"}
+                    </td>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.responsible && typeof d.responsible === 'string'
+                        ? String(d.responsible)
+                        : "—"}
+                    </td>
+                    <td className="py-3 px-2 text-sm text-slate-600">
+                      {d.unit && typeof d.unit === 'object' && d.unit.name
+                        ? String(d.unit.name)
+                        : "—"}
+                    </td>
+                    <td className="py-3 px-2">
+                      <Badge className={getClassificationColor(d.classification)}>
+                        {String(d.classification)}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-2">
+                      <Badge className={getStatusColor(d.status)}>{String(getStatusLabel(d.status))}</Badge>
                     </td>
                   </tr>
                 ))

@@ -60,6 +60,11 @@ export async function getDemand(id: string) {
   return data;
 }
 
+export async function getDemandByProtocol(protocol: string) {
+  const { data } = await http.get<DemandDetail>(`/demands/protocol/${protocol}`);
+  return data;
+}
+
 export interface CreateDemandDto {
   description: string;
   observation?: string;

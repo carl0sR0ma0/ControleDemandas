@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   listDemands,
   getDemand,
+  getDemandByProtocol,
   createDemand,
   updateDemand,
   changeDemandStatus,
@@ -38,22 +39,32 @@ export interface DemandListFilters {
 
 export function useDemandList(filters: DemandListFilters) {
   const q = { page: 1, size: 20, ...filters };
-  return useQuery({
+  return useQuery<DemandListResponse, Error, DemandListResponse>({
     queryKey: ["demands", "list", q],
-    queryFn: async () => {
+    queryFn: async (): Promise<DemandListResponse> => {
       return await listDemands(q);
     },
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 }
 
 export function useDemandDetail(id?: string) {
-  return useQuery({
+  return useQuery<DemandDetail, Error, DemandDetail>({
     queryKey: ["demands", "detail", id],
-    queryFn: async () => {
+    queryFn: async (): Promise<DemandDetail> => {
       return await getDemand(id!);
     },
     enabled: !!id,
+  });
+}
+
+export function useDemandDetailByProtocol(protocol?: string) {
+  return useQuery<DemandDetail, Error, DemandDetail>({
+    queryKey: ["demands", "detail", "protocol", protocol],
+    queryFn: async (): Promise<DemandDetail> => {
+      return await getDemandByProtocol(protocol!);
+    },
+    enabled: !!protocol,
   });
 }
 

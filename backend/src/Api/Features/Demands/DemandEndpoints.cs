@@ -108,6 +108,14 @@ public static class DemandEndpoints
         g.MapGet("/{id:guid}", async (Guid id, AppDbContext db) =>
         {
             var d = await db.Demands
+                .Include(x => x.Module)
+                    .ThenInclude(m => m.System)
+                .Include(x => x.ReporterArea)
+                .Include(x => x.Unit)
+                .Include(x => x.SystemVersion)
+                .Include(x => x.RequesterUser)
+                .Include(x => x.Attachments)
+                .Include(x => x.History)
                 .Where(x => x.Id == id)
                 .Select(x => new
                 {
@@ -119,6 +127,46 @@ public static class DemandEndpoints
                     x.OccurrenceType,
                     x.Classification,
                     x.Status,
+                    system = new { id = x.Module.System.Id, name = x.Module.System.Name },
+                    module = new { id = x.ModuleId, name = x.Module.Name, systemId = x.Module.SystemEntityId },
+                    reporterArea = new { id = x.ReporterAreaId, name = x.ReporterArea.Name },
+                    unit = new { id = x.UnitId, name = x.Unit.Name },
+                    systemVersion = x.SystemVersionId != null ? new { id = x.SystemVersionId, version = x.SystemVersion!.Version } : null,
+                    requester = new { id = x.RequesterUserId, name = x.RequesterUser.Name, email = x.RequesterUser.Email },
+                    x.Responsible,
+                    x.NextActionResponsible,
+                    x.EstimatedDelivery,
+                    x.DocumentUrl,
+                    attachments = x.Attachments.Select(a => new { a.Id, a.FileName, a.ContentType, a.Size, a.CreatedAt }),
+                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note })
+                })
+                .SingleOrDefaultAsync();
+            return d is null ? Results.NotFound() : Results.Ok(d);
+        });
+
+        g.MapGet("/protocol/{protocol}", async (string protocol, AppDbContext db) =>
+        {
+            var d = await db.Demands
+                .Include(x => x.Module)
+                    .ThenInclude(m => m.System)
+                .Include(x => x.ReporterArea)
+                .Include(x => x.Unit)
+                .Include(x => x.SystemVersion)
+                .Include(x => x.RequesterUser)
+                .Include(x => x.Attachments)
+                .Include(x => x.History)
+                .Where(x => x.Protocol == protocol)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Protocol,
+                    x.OpenedAt,
+                    x.Description,
+                    x.Observation,
+                    x.OccurrenceType,
+                    x.Classification,
+                    x.Status,
+                    system = new { id = x.Module.System.Id, name = x.Module.System.Name },
                     module = new { id = x.ModuleId, name = x.Module.Name, systemId = x.Module.SystemEntityId },
                     reporterArea = new { id = x.ReporterAreaId, name = x.ReporterArea.Name },
                     unit = new { id = x.UnitId, name = x.Unit.Name },
