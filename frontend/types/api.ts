@@ -1,7 +1,7 @@
 export enum DemandStatus {
   Aberta = "Aberta",
   Ranqueado = "Ranqueado",
-  AguardandoAprovacao = "AguardandoAprovacao",
+  Aprovacao = "Aprovacao",
   Execucao = "Execucao",
   Validacao = "Validacao",
   Concluida = "Concluida",

@@ -109,6 +109,7 @@ export function useUpdateDemand(id: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["demands", "detail", "protocol"] });
       queryClient.invalidateQueries({ queryKey: ["demands", "list"] });
     },
   });
@@ -121,6 +122,7 @@ export function useChangeDemandStatus(id: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["demands", "detail", "protocol"] });
       queryClient.invalidateQueries({ queryKey: ["demands", "list"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },

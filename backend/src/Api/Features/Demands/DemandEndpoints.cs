@@ -271,37 +271,78 @@ public static class DemandEndpoints
             return Results.Ok(saved);
         });
 
-        g.MapPut("/{id:guid}", async (Guid id, AppDbContext db, UpdateDemandDto dto) =>
+        g.MapPut("/{id:guid}", async (Guid id, AppDbContext db, UpdateDemandDto dto, ILogger<Program> logger) =>
         {
-            var d = await db.Demands.FindAsync(id);
-            if (d is null) return Results.NotFound();
+            try
+            {
+                logger.LogInformation("Updating demand {Id}", id);
 
-            d.Observation = dto.Observation ?? d.Observation;
-            d.NextActionResponsible = dto.NextActionResponsible ?? d.NextActionResponsible;
-            d.EstimatedDelivery = dto.EstimatedDelivery ?? d.EstimatedDelivery;
-            d.DocumentUrl = dto.DocumentUrl ?? d.DocumentUrl;
+                var d = await db.Demands.FindAsync(id);
+                if (d is null)
+                {
+                    logger.LogWarning("Demand {Id} not found", id);
+                    return Results.NotFound();
+                }
 
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+                if (dto.Observation is not null) d.Observation = dto.Observation;
+                if (dto.NextActionResponsible is not null) d.NextActionResponsible = dto.NextActionResponsible;
+                if (dto.EstimatedDelivery is not null) d.EstimatedDelivery = dto.EstimatedDelivery;
+                if (dto.DocumentUrl is not null) d.DocumentUrl = dto.DocumentUrl;
+
+                await db.SaveChangesAsync();
+                logger.LogInformation("Demand {Id} updated successfully", id);
+                return Results.NoContent();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating demand {Id}", id);
+                return Results.Problem(
+                    title: "Error updating demand",
+                    detail: ex.Message,
+                    statusCode: 500
+                );
+            }
         })
         .AddEndpointFilter(new ValidationFilter<UpdateDemandDto>());
 
         g.MapPost("/{id:guid}/status", [Authorize(Policy = "PERM:" + nameof(Permission.EditarStatus))] async (
-            Guid id, AppDbContext db, ChangeStatusDto dto, ClaimsPrincipal user) =>
+            Guid id, AppDbContext db, ChangeStatusDto dto, ClaimsPrincipal user, ILogger<Program> logger) =>
         {
-            var d = await db.Demands.Include(x => x.History).SingleOrDefaultAsync(x => x.Id == id);
-            if (d is null) return Results.NotFound();
-
-            d.Status = dto.NewStatus;
-            d.History.Add(new StatusHistory
+            try
             {
-                Status = dto.NewStatus,
-                Author = user.Identity?.Name ?? "sistema",
-                Note = dto.Note
-            });
+                logger.LogInformation("Changing status for demand {Id} to {Status}", id, dto.NewStatus);
 
-            await db.SaveChangesAsync();
-            return Results.Ok(new { d.Id, d.Status });
+                var d = await db.Demands.Include(x => x.History).SingleOrDefaultAsync(x => x.Id == id);
+                if (d is null)
+                {
+                    logger.LogWarning("Demand {Id} not found", id);
+                    return Results.NotFound();
+                }
+
+                d.Status = dto.NewStatus;
+
+                var history = new StatusHistory
+                {
+                    DemandId = d.Id,
+                    Status = dto.NewStatus,
+                    Author = user.Identity?.Name ?? "sistema",
+                    Note = dto.Note
+                };
+
+                db.StatusHistory.Add(history);
+                await db.SaveChangesAsync();
+                logger.LogInformation("Status changed successfully for demand {Id}", id);
+                return Results.Ok(new { d.Id, d.Status });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error changing status for demand {Id}", id);
+                return Results.Problem(
+                    title: "Error changing demand status",
+                    detail: ex.Message,
+                    statusCode: 500
+                );
+            }
         })
         .AddEndpointFilter(new ValidationFilter<ChangeStatusDto>());
 

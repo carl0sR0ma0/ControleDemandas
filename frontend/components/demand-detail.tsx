@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { StatusStepper } from "@/components/status-stepper"
 import { StatusHistoryTable } from "@/components/status-history-table"
-import { NextActionsCard } from "@/components/next-actions-card"
+import { StatusUpdateCard } from "@/components/status-update-card"
 import { Edit, Mail, Download, ArrowLeft } from "lucide-react"
 import { EditDemandForm } from "@/components/edit-demand-form"
 import Link from "next/link"
@@ -26,15 +26,15 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
       case DemandStatus.Aberta:
         return "bg-[#FFA726] text-white"
       case DemandStatus.Ranqueado:
-        return "bg-[#7CB342] text-white"
-      case DemandStatus.AguardandoAprovacao:
+        return "bg-[#B0BEC5] text-white"
+      case DemandStatus.Aprovacao:
         return "bg-[#66BB6A] text-white"
       case DemandStatus.Execucao:
         return "bg-[#5C6BC0] text-white"
       case DemandStatus.Validacao:
-        return "bg-[#B0BEC5] text-white"
+        return "bg-[#9C27B0] text-white"
       case DemandStatus.Concluida:
-        return "bg-[#BDBDBD] text-white"
+        return "bg-[#7CB342] text-white"
       default:
         return "bg-gray-500 text-white"
     }
@@ -46,7 +46,7 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
         return "Aberta"
       case DemandStatus.Ranqueado:
         return "Ranqueado"
-      case DemandStatus.AguardandoAprovacao:
+      case DemandStatus.Aprovacao:
         return "Aprovação"
       case DemandStatus.Execucao:
         return "Execução"
@@ -299,11 +299,12 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
         </CardContent>
       </Card>
 
-      {/* Next Actions */}
-      <NextActionsCard
-        protocol={demand.protocol}
-        responsible={demand.nextActionResponsible || demand.responsible || "Não atribuído"}
-        estimatedDate={demand.estimatedDelivery ?? undefined}
+      {/* Status Update */}
+      <StatusUpdateCard
+        demandId={demand.id}
+        currentStatus={demand.status}
+        currentResponsible={demand.nextActionResponsible || demand.responsible}
+        currentEstimatedDate={demand.estimatedDelivery}
       />
 
       {/* Status History */}

@@ -42,7 +42,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Areas");
+                    b.ToTable("Areas", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.Attachment", b =>
@@ -76,7 +76,7 @@ namespace Api.Migrations
 
                     b.HasIndex("DemandId");
 
-                    b.ToTable("Attachments");
+                    b.ToTable("Attachments", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.Demand", b =>
@@ -153,7 +153,7 @@ namespace Api.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Demands");
+                    b.ToTable("Demands", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.ModuleEntity", b =>
@@ -178,7 +178,7 @@ namespace Api.Migrations
                     b.HasIndex("SystemEntityId", "Name")
                         .IsUnique();
 
-                    b.ToTable("Modules");
+                    b.ToTable("Modules", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.PermissionEntity", b =>
@@ -214,7 +214,7 @@ namespace Api.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Permissions");
+                    b.ToTable("Permissions", (string)null);
 
                     b.HasData(
                         new
@@ -296,7 +296,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Profiles");
+                    b.ToTable("Profiles", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.ProfilePermission", b =>
@@ -314,7 +314,7 @@ namespace Api.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("ProfilePermissions");
+                    b.ToTable("ProfilePermissions", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.ProtocolCounter", b =>
@@ -333,7 +333,7 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProtocolCounters");
+                    b.ToTable("ProtocolCounters", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.StatusHistory", b =>
@@ -363,7 +363,7 @@ namespace Api.Migrations
 
                     b.HasIndex("DemandId");
 
-                    b.ToTable("StatusHistory");
+                    b.ToTable("StatusHistory", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.SystemEntity", b =>
@@ -385,7 +385,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Systems");
+                    b.ToTable("Systems", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.SystemVersion", b =>
@@ -410,7 +410,7 @@ namespace Api.Migrations
                     b.HasIndex("SystemEntityId", "Version")
                         .IsUnique();
 
-                    b.ToTable("SystemVersions");
+                    b.ToTable("SystemVersions", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.Unit", b =>
@@ -432,7 +432,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Units");
+                    b.ToTable("Units", (string)null);
                 });
 
             modelBuilder.Entity("Api.Domain.User", b =>
@@ -483,7 +483,7 @@ namespace Api.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
@@ -527,7 +527,7 @@ namespace Api.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("UserPermissions");
+                    b.ToTable("UserPermissions", (string)null);
 
                     b.HasData(
                         new

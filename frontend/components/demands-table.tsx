@@ -61,15 +61,15 @@ export function DemandsTable() {
       case DemandStatus.Aberta:
         return "bg-[#FFA726] text-white";
       case DemandStatus.Ranqueado:
-        return "bg-[#7CB342] text-white";
-      case DemandStatus.AguardandoAprovacao:
+        return "bg-[#B0BEC5] text-white";
+      case DemandStatus.Aprovacao:
         return "bg-[#66BB6A] text-white";
       case DemandStatus.Execucao:
         return "bg-[#5C6BC0] text-white";
       case DemandStatus.Validacao:
-        return "bg-[#B0BEC5] text-white";
+        return "bg-[#9C27B0] text-white";
       case DemandStatus.Concluida:
-        return "bg-[#BDBDBD] text-white";
+        return "bg-[#7CB342] text-white";
       default:
         return "bg-gray-500 text-white";
     }
@@ -81,7 +81,7 @@ export function DemandsTable() {
         return "Aberta";
       case DemandStatus.Ranqueado:
         return "Ranqueado";
-      case DemandStatus.AguardandoAprovacao:
+      case DemandStatus.Aprovacao:
         return "Aprovação";
       case DemandStatus.Execucao:
         return "Execução";

@@ -14,7 +14,7 @@ export function colorByStatus(s: DemandStatus): string {
       return COLORS.primary;
     case DemandStatus.Ranqueado:
       return COLORS.primary; // Em Aberto
-    case DemandStatus.AguardandoAprovacao:
+    case DemandStatus.Aprovacao:
       return COLORS.medium; // Diretoria
     case DemandStatus.Execucao:
       return COLORS.warning; // Em andamento
@@ -31,7 +31,7 @@ export const statusLabel = (s: DemandStatus) =>
   ({
     [DemandStatus.Aberta]: "Aberta",
     [DemandStatus.Ranqueado]: "Ranqueado (Em Aberto)",
-    [DemandStatus.AguardandoAprovacao]: "Aguardando Aprovação",
+    [DemandStatus.Aprovacao]: "Aprovação",
     [DemandStatus.Execucao]: "Execução",
     [DemandStatus.Validacao]: "Validação",
     [DemandStatus.Concluida]: "Concluída",

@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { CheckCircle, Circle, Clock } from "lucide-react"
+import { CheckCircle, Circle, Clock, CircleCheckBig } from "lucide-react"
 import { DemandStatus, type StatusHistory } from "@/types/api"
 
 interface StatusStepperProps {
@@ -12,11 +12,11 @@ interface StatusStepperProps {
 export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
   const statusOrder = [
     { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
-    { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#7CB342" },
-    { key: DemandStatus.AguardandoAprovacao, name: "Aprovação", color: "#66BB6A" },
+    { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#B0BEC5" },
+    { key: DemandStatus.Aprovacao, name: "Aprovação", color: "#66BB6A" },
     { key: DemandStatus.Execucao, name: "Execução", color: "#5C6BC0" },
-    { key: DemandStatus.Validacao, name: "Validação", color: "#B0BEC5" },
-    { key: DemandStatus.Concluida, name: "Concluída", color: "#BDBDBD" },
+    { key: DemandStatus.Validacao, name: "Validação", color: "#9C27B0" },
+    { key: DemandStatus.Concluida, name: "Concluída", color: "#7CB342" },
   ]
 
   // Map history to get dates for each status
@@ -52,7 +52,11 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
                 {isCompleted ? (
                   <CheckCircle className="w-5 h-5" />
                 ) : isCurrent ? (
-                  <Clock className="w-5 h-5" />
+                  step.name === "Concluída" ? (
+                    <CircleCheckBig className="w-5 h-5" />
+                  ) : (
+                    <Clock className="w-5 h-5" />
+                  )
                 ) : (
                   <Circle className="w-5 h-5" />
                 )}
