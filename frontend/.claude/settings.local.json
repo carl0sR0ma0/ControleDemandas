@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/temp/ControleDemandas/backend/src/Api/Features/Demands/**)",
+      "Read(//c/temp/ControleDemandas/backend/**)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(dotnet ef migrations:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -3,17 +3,20 @@ using System;
 using Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Api.Migrations
+namespace Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251029175743_AddResponsibleUserToStatusHistory")]
+    partial class AddResponsibleUserToStatusHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -356,10 +359,6 @@ namespace Api.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("text");
 
-                    b.Property<string>("ResponsibleUser")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -498,11 +497,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 29, 18, 5, 33, 463, DateTimeKind.Utc).AddTicks(3635),
+                            CreatedAt = new DateTime(2025, 10, 29, 17, 57, 41, 805, DateTimeKind.Utc).AddTicks(4862),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$klqeULIw44xdGtYjFHmzWOaiiSGt3B0P1kSLP0Mue1CRBzgV39NWe",
+                            PasswordHash = "$2a$11$3TXH3SZt0WmM.dzpM/A7VOO/1xSIDLDqGHV7T1NtV8JjVUdKem8/C",
                             ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
                             Role = "Admin"
                         },
@@ -510,11 +509,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 29, 18, 5, 33, 646, DateTimeKind.Utc).AddTicks(1124),
+                            CreatedAt = new DateTime(2025, 10, 29, 17, 57, 41, 984, DateTimeKind.Utc).AddTicks(9376),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$7E2RSqlRdR988P.zcCewGeJXNmmHBNEkw7OFzSMPyc5UqHvXC9pk.",
+                            PasswordHash = "$2a$11$OoM2RUyq8xRwNkEFhue0j.Q.hca9yK/M/qMOedOd/wFRfnyU/AcPy",
                             ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
                             Role = "Gestor"
                         });

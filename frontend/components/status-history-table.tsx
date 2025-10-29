@@ -43,6 +43,7 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Status</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Data</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Alterado por</th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Responsável</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Observação</th>
               </tr>
             </thead>
@@ -52,6 +53,7 @@ export function StatusHistoryTable({ history }: StatusHistoryTableProps) {
                   <td className="py-3 px-2 font-medium text-slate-800">{getStatusLabel(entry.status)}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{new Date(entry.date).toLocaleString("pt-BR")}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{entry.author}</td>
+                  <td className="py-3 px-2 text-sm text-slate-600">{entry.responsibleUser || "—"}</td>
                   <td className="py-3 px-2 text-sm text-slate-600">{entry.note || "—"}</td>
                 </tr>
               ))}

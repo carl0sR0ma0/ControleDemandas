@@ -76,6 +76,7 @@ public class StatusHistory
     public DateTime Date { get; set; } = DateTime.UtcNow;
     [MaxLength(160)] public string Author { get; set; } = default!;
     public string? Note { get; set; }
+    [MaxLength(120)] public string? ResponsibleUser { get; set; }
 }
 
 public class ProtocolCounter

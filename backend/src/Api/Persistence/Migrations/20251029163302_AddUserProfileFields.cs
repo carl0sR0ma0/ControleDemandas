@@ -11,26 +11,35 @@ namespace Api.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Department",
-                table: "Users",
-                type: "character varying(100)",
-                maxLength: 100,
-                nullable: true);
+            // Check and add Department column if it doesn't exist
+            migrationBuilder.Sql(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Users' AND column_name='Department') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""Department"" character varying(100) NULL;
+                    END IF;
+                END $$;
+            ");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Phone",
-                table: "Users",
-                type: "character varying(20)",
-                maxLength: 20,
-                nullable: true);
+            // Check and add Phone column if it doesn't exist
+            migrationBuilder.Sql(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Users' AND column_name='Phone') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""Phone"" character varying(20) NULL;
+                    END IF;
+                END $$;
+            ");
 
-            migrationBuilder.AddColumn<string>(
-                name: "ProfilePictureUrl",
-                table: "Users",
-                type: "character varying(500)",
-                maxLength: 500,
-                nullable: true);
+            // Check and add ProfilePictureUrl column if it doesn't exist
+            migrationBuilder.Sql(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Users' AND column_name='ProfilePictureUrl') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""ProfilePictureUrl"" character varying(500) NULL;
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.UpdateData(
                 table: "Users",

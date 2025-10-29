@@ -20,7 +20,7 @@ public static class DemandEndpoints
                 .Where(x => x.Protocol == protocol)
                 .Select(x => new {
                     x.Protocol, x.OpenedAt, x.OccurrenceType, x.Description, x.Observation, x.Status, x.EstimatedDelivery,
-                    Steps = x.History.Select(h => new { h.Status, h.Date, h.Author, h.Note })
+                    Steps = x.History.Select(h => new { h.Status, h.Date, h.Author, h.Note, h.ResponsibleUser })
                 })
                 .SingleOrDefaultAsync();
 
@@ -138,7 +138,7 @@ public static class DemandEndpoints
                     x.EstimatedDelivery,
                     x.DocumentUrl,
                     attachments = x.Attachments.Select(a => new { a.Id, a.FileName, a.ContentType, a.Size, a.CreatedAt }),
-                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note })
+                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note, h.ResponsibleUser })
                 })
                 .SingleOrDefaultAsync();
             return d is null ? Results.NotFound() : Results.Ok(d);
@@ -177,7 +177,7 @@ public static class DemandEndpoints
                     x.EstimatedDelivery,
                     x.DocumentUrl,
                     attachments = x.Attachments.Select(a => new { a.Id, a.FileName, a.ContentType, a.Size, a.CreatedAt }),
-                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note })
+                    history = x.History.OrderBy(h => h.Date).Select(h => new { h.Id, h.Status, h.Date, h.Author, h.Note, h.ResponsibleUser })
                 })
                 .SingleOrDefaultAsync();
             return d is null ? Results.NotFound() : Results.Ok(d);
@@ -361,6 +361,9 @@ public static class DemandEndpoints
                     return Results.NotFound();
                 }
 
+                // Captura o responsável antes de atualizar o status
+                var responsibleUser = d.NextActionResponsible;
+
                 d.Status = dto.NewStatus;
 
                 var history = new StatusHistory
@@ -368,7 +371,8 @@ public static class DemandEndpoints
                     DemandId = d.Id,
                     Status = dto.NewStatus,
                     Author = user.Identity?.Name ?? "sistema",
-                    Note = dto.Note
+                    Note = dto.Note,
+                    ResponsibleUser = responsibleUser
                 };
 
                 db.StatusHistory.Add(history);

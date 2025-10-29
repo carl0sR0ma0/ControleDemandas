@@ -94,6 +94,7 @@ export interface StatusHistory {
   date: string;
   author: string;
   note?: string | null;
+  responsibleUser?: string | null;
 }
 
 // Dashboard
