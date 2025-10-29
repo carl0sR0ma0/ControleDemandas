@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,56 +11,114 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Save, Camera, Key } from "lucide-react";
-import { PERMS, useAuthGuard } from "@/hooks/useAuthGuard";
-
-type UserProfile = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  permissions: number;
-  phone?: string;
-  department?: string;
-};
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save, Key, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import {
+  useProfile,
+  useUpdateProfile,
+  useChangePassword,
+} from "@/hooks/useProfile";
+import { useAreas } from "@/hooks/useConfigs";
 
 export default function PerfilPage() {
-  // 🔒 exige pelo menos visualizar demandas (ajuste a permissão desejada)
-  useAuthGuard(PERMS.VisualizarDemandas);
+  useAuthGuard();
 
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { data: profile, isLoading } = useProfile();
+  const { data: areas = [] } = useAreas();
+  const updateProfile = useUpdateProfile();
+  const changePassword = useChangePassword();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     phone: "",
-    department: "",
+    areaId: "",
   });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = localStorage.getItem("auth_user"); // ✅ chave correta
-    if (raw) {
-      const parsed = JSON.parse(raw) as UserProfile;
-      setUser(parsed);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const handleEditStart = () => {
+    if (profile) {
       setFormData({
-        name: parsed.name ?? "",
-        email: parsed.email ?? "",
-        phone: parsed.phone ?? "",
-        department: parsed.department ?? "",
+        name: profile.name,
+        phone: profile.phone || "",
+        areaId: profile.areaId || "",
+      });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateProfile.mutateAsync(formData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Erro ao atualizar perfil:", error);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    if (profile) {
+      setFormData({
+        name: profile.name,
+        phone: profile.phone || "",
+        areaId: profile.areaId || "",
       });
     }
-  }, []);
+  };
 
-  const handleSave = () => {
-    if (!user) return;
-    const updated: UserProfile = { ...user, ...formData };
-    localStorage.setItem("auth_user", JSON.stringify(updated)); // ✅ persiste
-    setUser(updated);
-    setIsEditing(false);
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+    setPasswordSuccess(false);
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      setPasswordError("Preencha todos os campos");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("As senhas não coincidem");
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError("A senha deve ter no mínimo 6 caracteres");
+      return;
+    }
+
+    try {
+      await changePassword.mutateAsync({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordSuccess(true);
+      setTimeout(() => {
+        setPasswordDialogOpen(false);
+        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setPasswordSuccess(false);
+      }, 2000);
+    } catch (error: any) {
+      setPasswordError(error.response?.data?.message || "Erro ao alterar senha");
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -72,7 +130,15 @@ export default function PerfilPage() {
     return colors[role] ?? "bg-gray-100 text-gray-800";
   };
 
-  if (!user) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-[#04A4A1]" />
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -88,36 +154,41 @@ export default function PerfilPage() {
         <Card className="border-0 shadow-sm">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarFallback className="bg-[#04A4A1] text-white text-2xl">
-                    {user.name?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  size="sm"
-                  type="button"
-                  className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-[#04A4A1] hover:bg-[#038a87]"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
+              <Avatar className="h-24 w-24">
+                <AvatarFallback className="bg-[#04A4A1] text-white text-2xl">
+                  {profile.name?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
             </div>
-            <CardTitle className="text-xl">{user.name}</CardTitle>
-            <CardDescription>{user.email}</CardDescription>
+            <CardTitle className="text-xl">{profile.name}</CardTitle>
+            <CardDescription>{profile.email}</CardDescription>
             <div className="flex justify-center mt-2">
-              <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
+              <Badge className={getRoleColor(profile.role)}>{profile.role}</Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-slate-600">Membro desde</p>
-              <p className="font-medium">Janeiro 2024</p>
+              <p className="font-medium">
+                {new Date(profile.createdAt).toLocaleDateString("pt-BR", {
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
             </div>
+            {profile.areaName && (
+              <>
+                <Separator />
+                <div className="text-center">
+                  <p className="text-sm text-slate-600">Área</p>
+                  <p className="font-medium">{profile.areaName}</p>
+                </div>
+              </>
+            )}
             <Separator />
             <div className="text-center">
               <p className="text-sm text-slate-600">Demandas Criadas</p>
-              <p className="font-medium text-[#04A4A1]">23</p>
+              <p className="font-medium text-[#04A4A1]">{profile.demandsCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -132,29 +203,63 @@ export default function PerfilPage() {
                   Atualize suas informações de perfil
                 </CardDescription>
               </div>
-              <Button
-                variant={isEditing ? "default" : "outline"}
-                onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-                className={isEditing ? "bg-[#04A4A1] hover:bg-[#038a87]" : ""}
-              >
-                {isEditing ? (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Salvar
-                  </>
-                ) : (
-                  "Editar"
-                )}
-              </Button>
+              {!isEditing ? (
+                <Button variant="outline" onClick={handleEditStart}>
+                  Editar
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={updateProfile.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={updateProfile.isPending}
+                    className="bg-[#04A4A1] hover:bg-[#038a87]"
+                  >
+                    {updateProfile.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {updateProfile.isSuccess && (
+              <Alert className="border-green-500 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Perfil atualizado com sucesso!
+                </AlertDescription>
+              </Alert>
+            )}
+            {updateProfile.isError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Erro ao atualizar perfil. Tente novamente.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo</Label>
                 <Input
                   id="name"
-                  value={formData.name}
+                  value={isEditing ? formData.name : profile.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
@@ -166,18 +271,19 @@ export default function PerfilPage() {
                 <Input
                   id="email"
                   type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  disabled={!isEditing}
+                  value={profile.email}
+                  disabled
+                  className="bg-slate-50"
                 />
+                <p className="text-xs text-slate-500">
+                  O e-mail não pode ser alterado
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
                 <Input
                   id="phone"
-                  value={formData.phone}
+                  value={isEditing ? formData.phone : (profile.phone || "")}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
@@ -186,16 +292,34 @@ export default function PerfilPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="department">Departamento</Label>
-                <Input
-                  id="department"
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  placeholder="Ex: Tecnologia"
-                />
+                <Label htmlFor="area">Área</Label>
+                {isEditing ? (
+                  <Select
+                    value={formData.areaId || "none"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, areaId: value === "none" ? "" : value })
+                    }
+                  >
+                    <SelectTrigger id="area">
+                      <SelectValue placeholder="Selecione uma área" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {areas.map((area) => (
+                        <SelectItem key={area.id} value={area.id}>
+                          {area.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="area"
+                    value={profile.areaName || "Não definida"}
+                    disabled
+                    className="bg-slate-50"
+                  />
+                )}
               </div>
             </div>
           </CardContent>
@@ -218,17 +342,132 @@ export default function PerfilPage() {
                 <div>
                   <p className="font-medium">Alterar Senha</p>
                   <p className="text-sm text-slate-600">
-                    Última alteração há 3 meses
+                    Mantenha sua conta segura
                   </p>
                 </div>
               </div>
-              <Button variant="outline" type="button">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setPasswordDialogOpen(true)}
+              >
                 Alterar
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Password Change Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+            <DialogDescription>
+              Digite sua senha atual e escolha uma nova senha
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {passwordError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{passwordError}</AlertDescription>
+              </Alert>
+            )}
+            {passwordSuccess && (
+              <Alert className="border-green-500 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Senha alterada com sucesso!
+                </AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Senha Atual</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
+                disabled={changePassword.isPending || passwordSuccess}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova Senha</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
+                disabled={changePassword.isPending || passwordSuccess}
+              />
+              <p className="text-xs text-slate-500">
+                Mínimo de 6 caracteres
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
+                disabled={changePassword.isPending || passwordSuccess}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPasswordDialogOpen(false);
+                  setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
+                  });
+                  setPasswordError("");
+                  setPasswordSuccess(false);
+                }}
+                disabled={changePassword.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handlePasswordChange}
+                disabled={changePassword.isPending || passwordSuccess}
+                className="bg-[#04A4A1] hover:bg-[#038a87]"
+              >
+                {changePassword.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Alterando...
+                  </>
+                ) : (
+                  <>
+                    <Key className="h-4 w-4 mr-2" />
+                    Alterar Senha
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

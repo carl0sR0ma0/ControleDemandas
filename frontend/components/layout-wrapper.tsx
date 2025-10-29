@@ -9,8 +9,8 @@ import { Footer } from "./footer"
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
-  // Don't show sidebar/footer on login page
-  if (pathname === "/") {
+  // Don't show sidebar/footer on login and home pages
+  if (pathname === "/" || pathname === "/home") {
     return <>{children}</>
   }
 

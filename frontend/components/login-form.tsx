@@ -28,7 +28,7 @@ export function LoginForm() {
     try {
       // chama /auth/login na API; o hook já salva token e usuário no localStorage
       await login({ email, password })
-      router.replace("/dashboard")
+      router.replace("/home")
     } catch (err: any) {
       const msg =
         err?.response?.status === 401

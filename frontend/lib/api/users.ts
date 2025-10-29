@@ -12,12 +12,12 @@ export async function getUser(id: string) {
   return data;
 }
 
-export async function createUser(payload: { name: string; email: string; password: string; role?: string; profileId?: string; areaId?: string; permissionCodes?: string[] }) {
+export async function createUser(payload: { name: string; email: string; password: string; phone?: string; role?: string; profileId?: string; areaId?: string; permissionCodes?: string[] }) {
   const { data } = await http.post<{ id: string }>("/users", { role: "Colaborador", ...payload, permissionCodes: payload.permissionCodes ?? [] });
   return data;
 }
 
-export async function updateUser(id: string, payload: { name?: string; email?: string; role?: string; active?: boolean; password?: string; profileId?: string; areaId?: string }) {
+export async function updateUser(id: string, payload: { name?: string; email?: string; phone?: string; role?: string; active?: boolean; password?: string; profileId?: string; areaId?: string }) {
   await http.put(`/users/${id}`, payload);
 }
 

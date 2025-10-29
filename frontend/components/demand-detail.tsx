@@ -12,6 +12,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { useDemandDetailByProtocol } from "@/hooks/useDemands"
 import { OccurrenceType, Classification, DemandStatus } from "@/types/api"
+import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
 
 interface DemandDetailProps {
   protocol: string
@@ -20,6 +21,7 @@ interface DemandDetailProps {
 export function DemandDetail({ protocol }: DemandDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const { data: demand, isLoading, error } = useDemandDetailByProtocol(protocol)
+  const canEdit = useHasPermission(PERMS.EditarDemanda)
 
   const getStatusColor = (status: DemandStatus) => {
     switch (status) {
@@ -131,14 +133,18 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleEditClick}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </Button>
-          <Button variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
-            Notificar
-          </Button>
+          {canEdit && (
+            <Button variant="outline" onClick={handleEditClick}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+          )}
+          {canEdit && (
+            <Button variant="outline">
+              <Mail className="h-4 w-4 mr-2" />
+              Notificar
+            </Button>
+          )}
         </div>
       </div>
 

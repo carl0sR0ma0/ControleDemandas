@@ -12,6 +12,7 @@ import { CalendarIcon, Save, AlertCircle, CheckCircle2 } from "lucide-react"
 import { DemandStatus } from "@/types/api"
 import { useChangeDemandStatus, useUpdateDemand } from "@/hooks/useDemands"
 import { Badge } from "@/components/ui/badge"
+import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
 
 interface StatusUpdateCardProps {
   demandId: string
@@ -74,6 +75,8 @@ export function StatusUpdateCard({
   currentResponsible,
   currentEstimatedDate,
 }: StatusUpdateCardProps) {
+  const canEditStatus = useHasPermission(PERMS.EditarStatus)
+
   // Converte ISO 8601 para YYYY-MM-DD para o input type="date"
   const formatDateForInput = (isoDate: string | null | undefined) => {
     if (!isoDate) return ""
@@ -200,7 +203,7 @@ export function StatusUpdateCard({
             )}
           </div>
 
-          {!isFinalStatus && (
+          {!isFinalStatus && canEditStatus && (
             <>
               {isEditing ? (
                 <>
@@ -318,9 +321,11 @@ export function StatusUpdateCard({
                     </div>
                   </div>
 
-                  <Button onClick={() => setIsEditing(true)} variant="outline" className="mt-2">
-                    Atualizar Status
-                  </Button>
+                  {canEditStatus && (
+                    <Button onClick={() => setIsEditing(true)} variant="outline" className="mt-2">
+                      Atualizar Status
+                    </Button>
+                  )}
                 </>
               )}
             </>
@@ -330,6 +335,14 @@ export function StatusUpdateCard({
             <Alert>
               <AlertDescription>
                 Esta demanda está concluída. O status não pode mais ser alterado.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!isFinalStatus && !canEditStatus && (
+            <Alert>
+              <AlertDescription>
+                Você não tem permissão para atualizar o status desta demanda.
               </AlertDescription>
             </Alert>
           )}

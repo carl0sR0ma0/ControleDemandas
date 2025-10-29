@@ -65,19 +65,19 @@ export function Sidebar() {
 
   if (!user) return null;
 
-  const canUsers =
-    (user.permissions & PERMS.GerenciarUsuarios) === PERMS.GerenciarUsuarios;
+  const hasPermission = (perm: number) => {
+    return (user.permissions & perm) === perm;
+  };
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-    { icon: FileText, label: "Demandas", href: "/demandas" },
-    { icon: Plus, label: "Nova Demanda", href: "/demandas/nova" },
+    ...(hasPermission(PERMS.AcessarDashboard) ? [{ icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" }] : []),
+    ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: FileText, label: "Demandas", href: "/demandas" }] : []),
+    ...(hasPermission(PERMS.RegistrarDemandas) ? [{ icon: Plus, label: "Nova Demanda", href: "/demandas/nova" }] : []),
     { icon: Search, label: "Consultar Protocolo", href: "/consultar" },
-    ...(canUsers ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
+    ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
+    ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Shield, label: "Perfis", href: "/perfis" }] : []),
+    ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Settings, label: "Configurações", href: "/configuracoes" }] : []),
   ];
-  if (canUsers) {
-    menuItems.push({ icon: Shield, label: "Perfis", href: "/perfis" });
-  }
 
   return (
     <div
@@ -181,12 +181,6 @@ export function Sidebar() {
                   <span>Perfil</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/configuracoes">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -220,12 +214,6 @@ export function Sidebar() {
                 <Link href="/perfil">
                   <User className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/configuracoes">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

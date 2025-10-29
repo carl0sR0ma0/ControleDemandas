@@ -14,12 +14,13 @@ public enum DemandStatus
 public enum Permission : long
 {
     None = 0,
-    AcessarDashboard      = 1 << 0,
-    VisualizarDemandas    = 1 << 1,
-    RegistrarDemandas     = 1 << 2,
-    EditarStatus          = 1 << 3,
-    Aprovar               = 1 << 4,
-    GerenciarUsuarios     = 1 << 5
+    AcessarDashboard      = 1 << 0,  // 1
+    VisualizarDemandas    = 1 << 1,  // 2
+    RegistrarDemandas     = 1 << 2,  // 4
+    EditarStatus          = 1 << 3,  // 8
+    Aprovar               = 1 << 4,  // 16
+    GerenciarUsuarios     = 1 << 5,  // 32
+    EditarDemanda         = 1 << 6   // 64
 }
 
 public enum OccurrenceType { Incremental = 1, Melhoria = 2, Bug = 3 }

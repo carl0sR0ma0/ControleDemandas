@@ -9,11 +9,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Api.Migrations
+namespace Api.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251027193726_removefields")]
-    partial class removefields
+    [Migration("20251029165115_RemoveDepartmentField")]
+    partial class RemoveDepartmentField
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -453,6 +453,10 @@ namespace Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -470,8 +474,16 @@ namespace Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<Guid?>("ProfileId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -493,11 +505,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 612, DateTimeKind.Utc).AddTicks(4682),
+                            CreatedAt = new DateTime(2025, 10, 29, 16, 51, 14, 486, DateTimeKind.Utc).AddTicks(2076),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$5HYvi8YdzgAGGEE6spaUKOVQBtN7YsQCmv5rmNYNReexh2eKDZBUS",
+                            PasswordHash = "$2a$11$3MLqlV3dC/li5.FAAXQcT.pHlig1XynrC2ziHkZnqXBQ1xbV/PBqW",
                             ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
                             Role = "Admin"
                         },
@@ -505,11 +517,11 @@ namespace Api.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 19, 37, 25, 721, DateTimeKind.Utc).AddTicks(7538),
+                            CreatedAt = new DateTime(2025, 10, 29, 16, 51, 14, 669, DateTimeKind.Utc).AddTicks(2318),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$SkQHAtSRAx/XyHSGtzKEeep8IFTdAqNvj3NvMdzoBQ3xY9IodPO/S",
+                            PasswordHash = "$2a$11$QiODz1ce/iyx3kRVvcAfWON.x6caZPpL9oAgxzVGBZx3LXuVYw2hO",
                             ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
                             Role = "Gestor"
                         });

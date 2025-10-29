@@ -45,7 +45,8 @@ public static class UserManagementEndpoints
                 Role = string.IsNullOrWhiteSpace(dto.Role) ? "Colaborador" : dto.Role!,
                 Active = true,
                 ProfileId = dto.ProfileId,
-                AreaId = dto.AreaId
+                AreaId = dto.AreaId,
+                Phone = dto.Phone
             };
             db.Users.Add(u);
             await db.SaveChangesAsync();
@@ -86,6 +87,7 @@ public static class UserManagementEndpoints
             if (u is null) return Results.NotFound();
             if (!string.IsNullOrWhiteSpace(dto.Name)) u.Name = dto.Name!;
             if (!string.IsNullOrWhiteSpace(dto.Email)) u.Email = dto.Email!.ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(dto.Phone)) u.Phone = dto.Phone;
             if (!string.IsNullOrWhiteSpace(dto.Role)) u.Role = dto.Role!;
             if (dto.Active is not null) u.Active = dto.Active.Value;
             if (!string.IsNullOrWhiteSpace(dto.Password)) u.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
@@ -158,7 +160,7 @@ public static class UserManagementEndpoints
         return app;
     }
 
-    public record CreateUser(string Name, string Email, string Password, string? Role, Guid? ProfileId, Guid? AreaId, string[]? PermissionCodes);
-    public record UpdateUser(string? Name, string? Email, string? Password, string? Role, bool? Active, Guid? ProfileId, Guid? AreaId);
+    public record CreateUser(string Name, string Email, string Password, string? Phone, string? Role, Guid? ProfileId, Guid? AreaId, string[]? PermissionCodes);
+    public record UpdateUser(string? Name, string? Email, string? Phone, string? Password, string? Role, bool? Active, Guid? ProfileId, Guid? AreaId);
     public record UpdateUserPermissions(string[] PermissionCodes);
 }

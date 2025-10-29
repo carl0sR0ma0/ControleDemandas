@@ -24,8 +24,8 @@ type UserRow = { id: string; name: string; email: string; active: boolean; permi
 export function PermissionsManager() {
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [adding, setAdding] = useState(false)
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", profileId: "", areaId: "" })
-  const [editUser, setEditUser] = useState<{ name: string; email: string; active: boolean; areaId?: string } | null>(null)
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", profileId: "", areaId: "", phone: "" })
+  const [editUser, setEditUser] = useState<{ name: string; email: string; active: boolean; areaId?: string; phone?: string } | null>(null)
   const [pwdOpen, setPwdOpen] = useState(false)
   const [pwd1, setPwd1] = useState("")
   const [pwd2, setPwd2] = useState("")
@@ -83,7 +83,7 @@ export function PermissionsManager() {
 
   useEffect(() => {
     if (selectedUser) {
-      setEditUser({ name: selectedUser.name, email: (selectedUser as any).email, active: (selectedUser as any).active, areaId: (selectedUser as any).areaId ?? "" })
+      setEditUser({ name: selectedUser.name, email: (selectedUser as any).email, active: (selectedUser as any).active, areaId: (selectedUser as any).areaId ?? "", phone: (selectedUser as any).phone ?? "" })
     } else {
       setEditUser(null)
     }
@@ -127,7 +127,7 @@ export function PermissionsManager() {
     }
     const res = await createUser({ ...newUser, permissionCodes: codes, profileId: newUser.profileId || undefined, areaId: newUser.areaId || undefined })
     setAdding(false)
-    setNewUser({ name: "", email: "", password: "", profileId: "", areaId: "" })
+    setNewUser({ name: "", email: "", password: "", profileId: "", areaId: "", phone: "" })
     await queryClient.invalidateQueries({ queryKey: ["permissions", "users"] })
     setSelectedUserId(res.id)
   }
@@ -169,6 +169,10 @@ export function PermissionsManager() {
               <div>
                 <Label>Email</Label>
                 <Input type="email" value={newUser.email} onChange={(e)=>setNewUser({...newUser, email: e.target.value})} />
+              </div>
+              <div>
+                <Label>Telefone</Label>
+                <Input type="tel" value={newUser.phone} onChange={(e)=>setNewUser({...newUser, phone: e.target.value})} placeholder="(11) 99999-9999" />
               </div>
               <div>
                 <Label>Senha</Label>
@@ -269,6 +273,10 @@ export function PermissionsManager() {
                     <div>
                       <Label>Email</Label>
                       <Input type="email" value={editUser.email} onChange={(e)=>setEditUser({...editUser, email: e.target.value})} />
+                    </div>
+                    <div>
+                      <Label>Telefone</Label>
+                      <Input type="tel" value={editUser.phone || ""} onChange={(e)=>setEditUser({...editUser, phone: e.target.value})} placeholder="(11) 99999-9999" />
                     </div>
                     <div>
                       <Label>Perfil</Label>

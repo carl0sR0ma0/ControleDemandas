@@ -112,6 +112,17 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/storage"
 });
 
+// static files for profile pictures and uploads
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+if (!Directory.Exists(uploadsPath))
+    Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = ""
+});
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -124,6 +135,7 @@ app.MapHealthChecks("/health/db", new HealthCheckOptions
 
 app.MapAuth();
 app.MapUserManagement();
+app.MapUserProfileEndpoints();
 app.MapDemandEndpoints();
 app.MapDashboard();
 app.MapInit();

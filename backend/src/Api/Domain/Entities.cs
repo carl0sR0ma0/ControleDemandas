@@ -18,6 +18,8 @@ public class User
     public Profile? Profile { get; set; }
     // Indica que as permissões do usuário diferem das do perfil
     public bool IsSpecial { get; set; } = false;
+    // Dados adicionais do perfil
+    [MaxLength(20)] public string? Phone { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

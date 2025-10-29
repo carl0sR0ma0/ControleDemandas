@@ -85,7 +85,7 @@ public static class PermissionEndpoints
                     var prof = await db.Profiles.AsNoTracking().SingleOrDefaultAsync(p => p.Id == u.ProfileId);
                     profileName = prof?.Name;
                 }
-                result.Add(new { u.Id, u.Name, u.Email, u.Role, u.Active, permissions = mask, u.CreatedAt, isSpecial = u.IsSpecial, profile = profileName, profileId = u.ProfileId, areaId = u.AreaId, area = u.Area?.Name });
+                result.Add(new { u.Id, u.Name, u.Email, u.Phone, u.Role, u.Active, permissions = mask, u.CreatedAt, isSpecial = u.IsSpecial, profile = profileName, profileId = u.ProfileId, areaId = u.AreaId, area = u.Area?.Name });
             }
             return Results.Ok(result);
         });

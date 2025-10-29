@@ -1,6 +1,11 @@
+"use client"
+
 import { DemandsTable } from "@/components/demands-table"
+import { useAuthGuard, PERMS } from "@/hooks/useAuthGuard"
 
 export default function DemandsPage() {
+  useAuthGuard(PERMS.VisualizarDemandas)
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
