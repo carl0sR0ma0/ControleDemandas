@@ -11,10 +11,14 @@ const getStatusLabel = (status: DemandStatus) => {
       return "Aberta"
     case DemandStatus.Ranqueado:
       return "Ranqueado"
+    case DemandStatus.Documentacao:
+      return "Documentação"
     case DemandStatus.Aprovacao:
       return "Aprovação"
     case DemandStatus.Execucao:
       return "Execução"
+    case DemandStatus.Pausado:
+      return "Pausado"
     case DemandStatus.Validacao:
       return "Validação"
     case DemandStatus.Concluida:

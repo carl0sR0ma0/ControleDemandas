@@ -51,8 +51,10 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
   const statusOrder = [
     { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
     { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#B0BEC5" },
+    { key: DemandStatus.Documentacao, name: "Documentação", color: "#29B6F6" },
     { key: DemandStatus.Aprovacao, name: "Aprovação", color: "#66BB6A" },
     { key: DemandStatus.Execucao, name: "Execução", color: "#5C6BC0" },
+    { key: DemandStatus.Pausado, name: "Pausado", color: "#FFA726" },
     { key: DemandStatus.Validacao, name: "Validação", color: "#9C27B0" },
     { key: DemandStatus.Concluida, name: "Concluída", color: "#7CB342" },
   ]
@@ -91,7 +93,9 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
               {/* Círculo com Tooltip */}
               <div className="relative">
                 <div
-                  ref={(el) => (circleRefs.current[index] = el)}
+                  ref={(el) => {
+                    circleRefs.current[index] = el
+                  }}
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-all ${
                     hasRegression ? "border-4 shadow-lg cursor-help" : ""
                   } ${

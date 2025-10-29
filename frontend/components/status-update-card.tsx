@@ -24,10 +24,12 @@ interface StatusUpdateCardProps {
 // Workflow flexível: define as transições permitidas
 const STATUS_TRANSITIONS: Record<DemandStatus, DemandStatus[]> = {
   [DemandStatus.Aberta]: [DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Ranqueado]: [DemandStatus.Aprovacao, DemandStatus.Aberta, DemandStatus.Concluida],
-  [DemandStatus.Aprovacao]: [DemandStatus.Execucao, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Execucao]: [DemandStatus.Validacao, DemandStatus.Aprovacao, DemandStatus.Concluida],
-  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Execucao],
+  [DemandStatus.Ranqueado]: [DemandStatus.Documentacao, DemandStatus.Aberta, DemandStatus.Concluida],
+  [DemandStatus.Documentacao]: [DemandStatus.Aprovacao, DemandStatus.Ranqueado, DemandStatus.Concluida],
+  [DemandStatus.Aprovacao]: [DemandStatus.Execucao, DemandStatus.Documentacao, DemandStatus.Concluida],
+  [DemandStatus.Execucao]: [DemandStatus.Pausado, DemandStatus.Validacao, DemandStatus.Aprovacao, DemandStatus.Concluida],
+  [DemandStatus.Pausado]: [DemandStatus.Execucao, DemandStatus.Validacao],
+  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Pausado],
   [DemandStatus.Concluida]: [], // Status final - não pode mudar
 }
 
@@ -37,10 +39,14 @@ const getStatusLabel = (status: DemandStatus) => {
       return "Aberta"
     case DemandStatus.Ranqueado:
       return "Ranqueado"
+    case DemandStatus.Documentacao:
+      return "Documentação"
     case DemandStatus.Aprovacao:
       return "Aprovação"
     case DemandStatus.Execucao:
       return "Execução"
+    case DemandStatus.Pausado:
+      return "Pausado"
     case DemandStatus.Validacao:
       return "Validação"
     case DemandStatus.Concluida:
@@ -56,10 +62,14 @@ const getStatusColor = (status: DemandStatus) => {
       return "bg-[#FFA726] text-white"
     case DemandStatus.Ranqueado:
       return "bg-[#B0BEC5] text-white"
+    case DemandStatus.Documentacao:
+      return "bg-[#29B6F6] text-white"
     case DemandStatus.Aprovacao:
       return "bg-[#66BB6A] text-white"
     case DemandStatus.Execucao:
       return "bg-[#5C6BC0] text-white"
+    case DemandStatus.Pausado:
+      return "bg-[#FFA726] text-white"
     case DemandStatus.Validacao:
       return "bg-[#9C27B0] text-white"
     case DemandStatus.Concluida:
@@ -296,11 +306,11 @@ export function StatusUpdateCard({
                 </>
               ) : (
                 <>
-                  {/* Visualização: Cliente e Data */}
+                  {/* Visualização: Responsável e Data */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <Label className="text-slate-600 text-sm">
-                        Cliente
+                        Responsável do Status Atual
                       </Label>
                       <p className="font-medium text-slate-800">
                         {currentResponsible || "Não atribuído"}

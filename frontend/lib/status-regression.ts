@@ -6,10 +6,12 @@ import { DemandStatus, StatusHistory } from "@/types/api"
 const STATUS_HIERARCHY: Record<DemandStatus, number> = {
   [DemandStatus.Aberta]: 0,
   [DemandStatus.Ranqueado]: 1,
-  [DemandStatus.Aprovacao]: 2,
-  [DemandStatus.Execucao]: 3,
-  [DemandStatus.Validacao]: 4,
-  [DemandStatus.Concluida]: 5,
+  [DemandStatus.Documentacao]: 2,
+  [DemandStatus.Aprovacao]: 3,
+  [DemandStatus.Execucao]: 4,
+  [DemandStatus.Pausado]: 5,
+  [DemandStatus.Validacao]: 6,
+  [DemandStatus.Concluida]: 7,
 }
 
 /**

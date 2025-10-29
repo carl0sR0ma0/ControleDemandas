@@ -29,10 +29,14 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
         return "bg-[#FFA726] text-white"
       case DemandStatus.Ranqueado:
         return "bg-[#B0BEC5] text-white"
+      case DemandStatus.Documentacao:
+        return "bg-[#29B6F6] text-white"
       case DemandStatus.Aprovacao:
         return "bg-[#66BB6A] text-white"
       case DemandStatus.Execucao:
         return "bg-[#5C6BC0] text-white"
+      case DemandStatus.Pausado:
+        return "bg-[#FFA726] text-white"
       case DemandStatus.Validacao:
         return "bg-[#9C27B0] text-white"
       case DemandStatus.Concluida:
@@ -48,10 +52,14 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
         return "Aberta"
       case DemandStatus.Ranqueado:
         return "Ranqueado"
+      case DemandStatus.Documentacao:
+        return "Documentação"
       case DemandStatus.Aprovacao:
         return "Aprovação"
       case DemandStatus.Execucao:
         return "Execução"
+      case DemandStatus.Pausado:
+        return "Pausado"
       case DemandStatus.Validacao:
         return "Validação"
       case DemandStatus.Concluida:
@@ -315,7 +323,12 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
       <StatusUpdateCard
         demandId={demand.id}
         currentStatus={demand.status}
-        currentResponsible={demand.nextActionResponsible || demand.responsible}
+        currentResponsible={
+          // Busca o responsável do último status (status atual) no histórico
+          demand.history
+            ?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .find((h) => h.status === demand.status)?.responsibleUser || null
+        }
         currentEstimatedDate={demand.estimatedDelivery}
       />
 

@@ -4,10 +4,12 @@ public enum DemandStatus
 {
     Aberta = 0,
     Ranqueado = 1,
-    Aprovacao = 2,
-    Execucao = 3,
-    Validacao = 4,
-    Concluida = 5
+    Documentacao = 2,
+    Aprovacao = 3,
+    Execucao = 4,
+    Pausado = 5,
+    Validacao = 6,
+    Concluida = 7
 }
 
 [Flags]
