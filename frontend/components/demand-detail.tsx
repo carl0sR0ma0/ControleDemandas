@@ -106,7 +106,13 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
   }
 
   if (isEditing) {
-    return <EditDemandForm protocol={demand.protocol} currentUserId="user-123" />
+    return (
+      <EditDemandForm
+        protocol={demand.protocol}
+        currentUserId="user-123"
+        onEditComplete={() => setIsEditing(false)}
+      />
+    )
   }
 
   return (

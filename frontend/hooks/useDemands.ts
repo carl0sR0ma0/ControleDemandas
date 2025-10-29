@@ -96,7 +96,15 @@ export function useCreateDemand() {
 }
 
 export interface UpdateDemandDto {
+  description?: string;
   observation?: string;
+  moduleId?: string;
+  reporterAreaId?: string;
+  occurrenceType?: OccurrenceType;
+  unitId?: string;
+  classification?: Classification;
+  responsible?: string;
+  systemVersionId?: string;
   nextActionResponsible?: string;
   estimatedDelivery?: string;
   documentUrl?: string;
@@ -111,6 +119,7 @@ export function useUpdateDemand(id: string) {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", "protocol"] });
       queryClient.invalidateQueries({ queryKey: ["demands", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

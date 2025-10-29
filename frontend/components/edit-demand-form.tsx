@@ -27,72 +27,135 @@ import {
 
 // ⬇️ hooks React Query da integração
 import {
-  useDemandDetail,
+  useDemandDetailByProtocol,
   useUpdateDemand,
   useUploadAttachments,
 } from "@/hooks/useDemands";
+import {
+  useAreas,
+  useSystems,
+  useModules,
+  useVersions,
+} from "@/hooks/useConfigs";
 
 interface EditDemandFormProps {
   protocol: string; // ← usamos como 'id' da demanda
   currentUserId?: string;
+  onEditComplete?: () => void; // callback para voltar ao modo de visualização
 }
 
 export function EditDemandForm({
   protocol,
   currentUserId,
+  onEditComplete,
 }: EditDemandFormProps) {
   const router = useRouter();
 
   // ⬇️ carrega dados da demanda
-  const { data, isLoading } = useDemandDetail(protocol);
-  const update = useUpdateDemand(protocol);
-  const upload = useUploadAttachments(protocol);
+  const { data, isLoading } = useDemandDetailByProtocol(protocol);
+  const update = useUpdateDemand(data?.id || "");
+  const upload = useUploadAttachments(data?.id || "");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
 
-  // Mock: combos dependentes (mantive seu exemplo)
-  const systemsData: Record<string, { modules: string[]; versions: string[] }> =
-    {
-      PGDI: {
-        modules: ["PAP", "Ocorrências", "Online", "RTA"],
-        versions: ["2.38.0", "2.38.1"],
-      },
-      PCP: {
-        modules: ["Relatórios", "Planejamento", "Configurações", "Premissas"],
-        versions: ["2.38.1", "2.39.0"],
-      },
-    };
+  // ⬇️ carrega dados de configuração da API
+  const { data: areasFromApi = [], isLoading: areasLoading } = useAreas();
+  const { data: systemsFromApi = [], isLoading: systemsLoading } = useSystems();
+
+  // Garante que sistema e área da demanda estejam nas listas
+  const systems = useMemo(() => {
+    const list = [...systemsFromApi];
+    if (data?.system && typeof data.system === 'object' && !list.find(s => s.id === data.system.id)) {
+      list.push({
+        id: data.system.id,
+        name: data.system.name,
+        active: true,
+      });
+    }
+    return list;
+  }, [systemsFromApi, data?.system]);
+
+  const areas = useMemo(() => {
+    const list = [...areasFromApi];
+    if (data?.reporterArea && typeof data.reporterArea === 'object' && !list.find(a => a.id === data.reporterArea.id)) {
+      list.push({
+        id: data.reporterArea.id,
+        name: data.reporterArea.name,
+        active: true,
+      });
+    }
+    return list;
+  }, [areasFromApi, data?.reporterArea]);
+
+
   // estado do form inicializado a partir do detalhe
   const [formData, setFormData] = useState({
     description: "",
-    module: "",
+    moduleId: "",
     responsible: currentUserId ?? "",
-    area: "",
-    system: "",
+    areaId: "",
+    systemId: "",
     type: "",
     classification: "",
-    version: "",
+    versionId: "",
     document: "",
     observation: "",
   });
 
+  // ⬇️ carrega módulos e versões baseado no sistema selecionado
+  const { data: modulesFromApi = [], isLoading: modulesLoading, error: modulesError } = useModules(formData.systemId);
+  const { data: versionsFromApi = [], isLoading: versionsLoading, error: versionsError } = useVersions(formData.systemId);
+
+  // Se os dados da demanda tiverem módulo/versão, garante que eles estejam nas listas
+  const modules = useMemo(() => {
+    const list = [...modulesFromApi];
+    // Se a demanda tem um módulo que não está na lista da API ainda, adiciona temporariamente
+    if (data?.module && typeof data.module === 'object' && !list.find(m => m.id === data.module.id)) {
+      list.push({
+        id: data.module.id,
+        name: data.module.name,
+        active: true,
+      });
+    }
+    return list;
+  }, [modulesFromApi, data?.module]);
+
+  const versions = useMemo(() => {
+    const list = [...versionsFromApi];
+    // Se a demanda tem uma versão que não está na lista da API ainda, adiciona temporariamente
+    if (data?.systemVersion && typeof data.systemVersion === 'object' && !list.find(v => v.id === data.systemVersion.id)) {
+      list.push({
+        id: data.systemVersion.id,
+        version: data.systemVersion.version,
+        active: true,
+      });
+    }
+    return list;
+  }, [versionsFromApi, data?.systemVersion]);
+
+
   // quando o detalhe chegar, preenche o form
   useEffect(() => {
     if (!data) return;
-    setFormData((prev) => ({
-      ...prev,
+
+    const newFormData = {
       description: data.description ?? "",
-      module: data.module ?? "",
+      moduleId: data.module && typeof data.module === 'object' ? data.module.id : "",
       responsible: data.responsible ?? data.nextActionResponsible ?? currentUserId ?? "",
-      area: data.reporterArea ?? "",
-      system: data.productModule ?? "", // ajuste se no backend vier outro campo p/ sistema
+      areaId: data.reporterArea && typeof data.reporterArea === 'object' ? data.reporterArea.id : "",
+      systemId: data.system && typeof data.system === 'object' ? data.system.id : "",
       type: String(data.occurrenceType ?? "") || "",
       classification: String(data.classification ?? "") || "",
-      version: data.systemVersion ?? "",
+      versionId: data.systemVersion && typeof data.systemVersion === 'object' ? data.systemVersion.id : "",
       document: data.documentUrl ?? "",
       observation: data.observation ?? "",
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      ...newFormData,
     }));
   }, [data, currentUserId]);
 
@@ -111,11 +174,17 @@ export function EditDemandForm({
     setIsSubmitting(true);
 
     try {
-      // ⬇️ mapeia para o que a API aceita hoje (UpdateDemandDto)
+      // ⬇️ envia todos os campos editáveis para a API
       await update.mutateAsync({
+        description: formData.description || undefined,
         observation: formData.observation || undefined,
+        moduleId: formData.moduleId || undefined,
+        reporterAreaId: formData.areaId || undefined,
+        occurrenceType: formData.type ? formData.type as any : undefined,
+        classification: formData.classification ? formData.classification as any : undefined,
+        responsible: formData.responsible || undefined,
+        systemVersionId: formData.versionId || undefined,
         documentUrl: formData.document || undefined,
-        // nextActionResponsible / estimatedDelivery / order -> inclua se quiser expor esses campos
       });
 
       if (attachments.length > 0) {
@@ -167,13 +236,13 @@ export function EditDemandForm({
           </Alert>
           <div className="flex gap-4 justify-center">
             <Button
-              onClick={() => router.push(`/demandas/${protocol}`)}
+              onClick={() => onEditComplete ? onEditComplete() : router.push(`/demandas/${protocol}`)}
               className="bg-[#04A4A1] hover:bg-[#038a87]"
             >
               <FileText className="w-4 h-4 mr-2" />
               Ver Detalhes
             </Button>
-            <Button variant="outline" onClick={() => window.location.reload()}>
+            <Button variant="outline" onClick={() => setIsSubmitted(false)}>
               Editar Novamente
             </Button>
           </div>
@@ -232,13 +301,14 @@ export function EditDemandForm({
             Sistema <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={formData.system}
+            key={`system-${formData.systemId}-${systems.length}`}
+            value={formData.systemId}
             onValueChange={(value) =>
               setFormData((p) => ({
                 ...p,
-                system: value,
-                module: "",
-                version: "",
+                systemId: value,
+                moduleId: "",
+                versionId: "",
               }))
             }
             required
@@ -247,9 +317,9 @@ export function EditDemandForm({
               <SelectValue placeholder="Selecione o sistema" />
             </SelectTrigger>
             <SelectContent>
-              {Object.keys(systemsData).map((sys) => (
-                <SelectItem key={sys} value={sys}>
-                  {sys}
+              {systems.filter(s => s.active).map((sys) => (
+                <SelectItem key={sys.id} value={sys.id}>
+                  {sys.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -262,27 +332,25 @@ export function EditDemandForm({
             Módulo <span className="text-red-500">*</span>
           </Label>
           <Select
-            disabled={!formData.system}
-            value={formData.module}
-            onValueChange={(value) => handleInputChange("module", value)}
+            key={`module-${formData.moduleId}-${modules.length}`}
+            disabled={!formData.systemId}
+            value={formData.moduleId}
+            onValueChange={(value) => handleInputChange("moduleId", value)}
             required
           >
             <SelectTrigger className="w-full">
               <SelectValue
                 placeholder={
-                  formData.system
+                  formData.systemId
                     ? "Selecione o módulo"
                     : "Selecione primeiro o sistema"
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system
-                ? systemsData[formData.system].modules
-                : []
-              ).map((mod) => (
-                <SelectItem key={mod} value={mod}>
-                  {mod}
+              {modules.filter(m => m.active).map((mod) => (
+                <SelectItem key={mod.id} value={mod.id}>
+                  {mod.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -293,27 +361,25 @@ export function EditDemandForm({
         <div className="space-y-2 col-span-12 md:col-span-6">
           <Label className="text-slate-700">Versão do Sistema</Label>
           <Select
-            disabled={!formData.system}
-            value={formData.version}
-            onValueChange={(value) => handleInputChange("version", value)}
+            key={`version-${formData.versionId}-${versions.length}`}
+            disabled={!formData.systemId}
+            value={formData.versionId}
+            onValueChange={(value) => handleInputChange("versionId", value)}
             required
           >
             <SelectTrigger className="w-full">
               <SelectValue
                 placeholder={
-                  formData.system
+                  formData.systemId
                     ? "Selecione a versão"
                     : "Selecione primeiro o sistema"
                 }
               />
             </SelectTrigger>
             <SelectContent>
-              {(formData.system
-                ? systemsData[formData.system].versions
-                : []
-              ).map((ver) => (
-                <SelectItem key={ver} value={ver}>
-                  {ver}
+              {versions.filter(v => v.active).map((ver) => (
+                <SelectItem key={ver.id} value={ver.id}>
+                  {ver.version}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -326,18 +392,20 @@ export function EditDemandForm({
             Área Relatora <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={formData.area}
-            onValueChange={(value) => handleInputChange("area", value)}
+            key={`area-${formData.areaId}-${areas.length}`}
+            value={formData.areaId}
+            onValueChange={(value) => handleInputChange("areaId", value)}
             required
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione a área" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Tecnologia">Tecnologia</SelectItem>
-              <SelectItem value="Engenharia">Engenharia</SelectItem>
-              <SelectItem value="PMO">PMO</SelectItem>
-              <SelectItem value="CX">CX</SelectItem>
+              {areas.filter(a => a.active).map((area) => (
+                <SelectItem key={area.id} value={area.id}>
+                  {area.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -491,7 +559,7 @@ export function EditDemandForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/demandas/${protocol}`)}
+            onClick={() => onEditComplete ? onEditComplete() : router.push(`/demandas/${protocol}`)}
           >
             Cancelar
           </Button>

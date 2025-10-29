@@ -277,14 +277,56 @@ public static class DemandEndpoints
             {
                 logger.LogInformation("Updating demand {Id}", id);
 
-                var d = await db.Demands.FindAsync(id);
+                var d = await db.Demands.Include(x => x.Module).SingleOrDefaultAsync(x => x.Id == id);
                 if (d is null)
                 {
                     logger.LogWarning("Demand {Id} not found", id);
                     return Results.NotFound();
                 }
 
+                // Validações se campos relacionados foram fornecidos
+                if (dto.ModuleId is not null)
+                {
+                    var module = await db.Modules.FindAsync(dto.ModuleId.Value);
+                    if (module is null) return Results.BadRequest(new { error = "module_not_found" });
+                    d.ModuleId = dto.ModuleId.Value;
+                }
+
+                if (dto.ReporterAreaId is not null)
+                {
+                    var area = await db.Areas.FindAsync(dto.ReporterAreaId.Value);
+                    if (area is null) return Results.BadRequest(new { error = "area_not_found" });
+                    d.ReporterAreaId = dto.ReporterAreaId.Value;
+                }
+
+                if (dto.UnitId is not null)
+                {
+                    var unit = await db.Units.FindAsync(dto.UnitId.Value);
+                    if (unit is null) return Results.BadRequest(new { error = "unit_not_found" });
+                    d.UnitId = dto.UnitId.Value;
+                }
+
+                if (dto.SystemVersionId is not null)
+                {
+                    var version = await db.SystemVersions.Include(v => v.System).SingleOrDefaultAsync(v => v.Id == dto.SystemVersionId.Value);
+                    if (version is null) return Results.BadRequest(new { error = "system_version_not_found" });
+
+                    // Valida se a versão pertence ao mesmo sistema do módulo
+                    var moduleSystemId = dto.ModuleId is not null
+                        ? (await db.Modules.FindAsync(dto.ModuleId.Value))?.SystemEntityId
+                        : d.Module.SystemEntityId;
+
+                    if (version.SystemEntityId != moduleSystemId)
+                        return Results.BadRequest(new { error = "system_version_mismatch" });
+
+                    d.SystemVersionId = dto.SystemVersionId.Value;
+                }
+
+                if (dto.Description is not null) d.Description = dto.Description;
                 if (dto.Observation is not null) d.Observation = dto.Observation;
+                if (dto.OccurrenceType is not null) d.OccurrenceType = dto.OccurrenceType.Value;
+                if (dto.Classification is not null) d.Classification = dto.Classification.Value;
+                if (dto.Responsible is not null) d.Responsible = dto.Responsible;
                 if (dto.NextActionResponsible is not null) d.NextActionResponsible = dto.NextActionResponsible;
                 if (dto.EstimatedDelivery is not null) d.EstimatedDelivery = dto.EstimatedDelivery;
                 if (dto.DocumentUrl is not null) d.DocumentUrl = dto.DocumentUrl;
@@ -365,7 +407,15 @@ public static class DemandEndpoints
     );
 
     public record UpdateDemandDto(
+        string? Description,
         string? Observation,
+        Guid? ModuleId,
+        Guid? ReporterAreaId,
+        OccurrenceType? OccurrenceType,
+        Guid? UnitId,
+        Classification? Classification,
+        string? Responsible,
+        Guid? SystemVersionId,
         string? NextActionResponsible,
         DateTime? EstimatedDelivery,
         string? DocumentUrl
