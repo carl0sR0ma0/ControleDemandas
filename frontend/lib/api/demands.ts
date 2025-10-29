@@ -112,3 +112,23 @@ export async function uploadAttachments(id: string, files: File[]) {
   return data;
 }
 
+// Public endpoint - não requer autenticação
+export async function getPublicDemandByProtocol(protocol: string) {
+  const { data } = await http.get<{
+    protocol: string;
+    openedAt: string;
+    occurrenceType: string;
+    description: string;
+    observation: string | null;
+    status: string;
+    estimatedDelivery: string | null;
+    steps: Array<{
+      status: string;
+      date: string;
+      author: string;
+      note: string | null;
+    }>;
+  }>(`/public/protocol/${protocol}`);
+  return data;
+}
+

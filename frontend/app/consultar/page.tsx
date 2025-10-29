@@ -13,10 +13,8 @@ export default function ConsultarPage() {
             </p>
           </div>
 
-          <ProtocolLookup />
-
           {/* Instructions */}
-          <div className="mt-12 bg-white rounded-lg shadow-sm p-6">
+          <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-4">Como usar</h2>
             <div className="space-y-3 text-slate-600">
               <div className="flex items-start gap-3">
@@ -39,6 +37,8 @@ export default function ConsultarPage() {
               </div>
             </div>
           </div>
+
+          <ProtocolLookup />
 
           {/* Contact Info */}
           <div className="mt-8 text-center">

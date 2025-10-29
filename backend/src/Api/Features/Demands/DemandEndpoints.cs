@@ -19,7 +19,7 @@ public static class DemandEndpoints
                 .Include(x => x.History.OrderBy(h => h.Date))
                 .Where(x => x.Protocol == protocol)
                 .Select(x => new {
-                    x.Protocol, x.OpenedAt, x.OccurrenceType, x.Observation, x.Status,
+                    x.Protocol, x.OpenedAt, x.OccurrenceType, x.Description, x.Observation, x.Status, x.EstimatedDelivery,
                     Steps = x.History.Select(h => new { h.Status, h.Date, h.Author, h.Note })
                 })
                 .SingleOrDefaultAsync();
