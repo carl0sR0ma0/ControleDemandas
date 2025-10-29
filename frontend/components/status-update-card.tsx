@@ -90,7 +90,7 @@ export function StatusUpdateCard({
   const [isEditing, setIsEditing] = useState(false)
   const [newStatus, setNewStatus] = useState<DemandStatus | "">("")
   const [observation, setObservation] = useState("")
-  const [responsible, setResponsible] = useState(currentResponsible || "")
+  const [responsible, setResponsible] = useState("")
   const [estimatedDate, setEstimatedDate] = useState(formatDateForInput(currentEstimatedDate))
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -106,7 +106,7 @@ export function StatusUpdateCard({
     setIsEditing(false)
     setNewStatus("")
     setObservation("")
-    setResponsible(currentResponsible || "")
+    setResponsible("")
     setEstimatedDate(formatDateForInput(currentEstimatedDate))
     setError("")
   }
@@ -130,12 +130,11 @@ export function StatusUpdateCard({
       await changeStatusMutation.mutateAsync({
         newStatus: newStatus as DemandStatus,
         note: observation,
+        responsibleUser: responsible || undefined,
       })
 
-      // 2. Atualiza responsável e data estimada (se alterados)
-      const needsUpdate =
-        responsible !== (currentResponsible || "") ||
-        estimatedDate !== formatDateForInput(currentEstimatedDate)
+      // 2. Atualiza data estimada se alterada
+      const needsUpdate = estimatedDate !== formatDateForInput(currentEstimatedDate)
 
       if (needsUpdate) {
         // Converte data YYYY-MM-DD para ISO 8601 com timezone
@@ -144,7 +143,6 @@ export function StatusUpdateCard({
           : undefined
 
         await updateDemandMutation.mutateAsync({
-          nextActionResponsible: responsible || undefined,
           estimatedDelivery: estimatedDeliveryISO,
         })
       }
@@ -156,9 +154,7 @@ export function StatusUpdateCard({
         setIsEditing(false)
         setNewStatus("")
         setObservation("")
-        // Atualiza os valores "atuais" com os novos
-        setResponsible(responsible)
-        setEstimatedDate(estimatedDate)
+        setResponsible("")
       }, 2000)
     } catch (err) {
       console.error("Erro ao atualizar status:", err)
@@ -226,6 +222,22 @@ export function StatusUpdateCard({
                     </Select>
                   </div>
 
+                  {/* Responsável */}
+                  <div className="space-y-2">
+                    <Label htmlFor="responsible" className="text-slate-700">
+                      Responsável
+                    </Label>
+                    <Input
+                      id="responsible"
+                      value={responsible}
+                      onChange={(e) => setResponsible(e.target.value)}
+                      placeholder="Nome do responsável responsável pelo novo status"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Pessoa que será responsável pela ação do novo status
+                    </p>
+                  </div>
+
                   {/* Observação */}
                   <div className="space-y-2">
                     <Label htmlFor="observation" className="text-slate-700">
@@ -235,7 +247,7 @@ export function StatusUpdateCard({
                       id="observation"
                       value={observation}
                       onChange={(e) => setObservation(e.target.value)}
-                      placeholder="Descreva o motivo da mudança de status..."
+                      placeholder="Descreva o que precisa ser feito neste status ou contexto adicional..."
                       rows={3}
                       className="resize-none"
                     />
@@ -244,34 +256,20 @@ export function StatusUpdateCard({
                     </p>
                   </div>
 
-                  {/* Grid: Responsável + Data */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="responsible" className="text-slate-700">
-                        Responsável da Próxima Ação
-                      </Label>
+                  {/* Data */}
+                  <div className="space-y-2">
+                    <Label htmlFor="estimated-date" className="text-slate-700">
+                      Estimativa de Conclusão
+                    </Label>
+                    <div className="relative">
                       <Input
-                        id="responsible"
-                        value={responsible}
-                        onChange={(e) => setResponsible(e.target.value)}
-                        placeholder="Nome do responsável"
+                        id="estimated-date"
+                        type="date"
+                        value={estimatedDate}
+                        onChange={(e) => setEstimatedDate(e.target.value)}
+                        className="pl-10"
                       />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="estimated-date" className="text-slate-700">
-                        Estimativa de Conclusão
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="estimated-date"
-                          type="date"
-                          value={estimatedDate}
-                          onChange={(e) => setEstimatedDate(e.target.value)}
-                          className="pl-10"
-                        />
-                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      </div>
+                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                     </div>
                   </div>
 
@@ -298,14 +296,14 @@ export function StatusUpdateCard({
                 </>
               ) : (
                 <>
-                  {/* Visualização: Responsável e Data */}
+                  {/* Visualização: Cliente e Data */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <Label className="text-slate-600 text-sm">
-                        Responsável da Próxima Ação
+                        Cliente
                       </Label>
                       <p className="font-medium text-slate-800">
-                        {responsible || "Não atribuído"}
+                        {currentResponsible || "Não atribuído"}
                       </p>
                     </div>
 

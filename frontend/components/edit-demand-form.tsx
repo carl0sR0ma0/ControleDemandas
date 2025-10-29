@@ -410,13 +410,13 @@ export function EditDemandForm({
           </Select>
         </div>
 
-        {/* Responsável */}
+        {/* Cliente */}
         <div className="space-y-2 col-span-12 md:col-span-6">
-          <Label className="text-slate-700">Responsável</Label>
+          <Label className="text-slate-700">Cliente</Label>
           <Input
             value={formData.responsible}
             onChange={(e) => handleInputChange("responsible", e.target.value)}
-            placeholder="Informe o responsável"
+            placeholder="Informe o cliente"
           />
         </div>
 

@@ -96,7 +96,7 @@ export async function updateDemand(id: string, payload: UpdateDemandDto) {
   await http.put(`/demands/${id}`, payload);
 }
 
-export async function changeDemandStatus(id: string, params: { newStatus: DemandStatus; note?: string }) {
+export async function changeDemandStatus(id: string, params: { newStatus: DemandStatus; note?: string; responsibleUser?: string }) {
   const { data } = await http.post<{ id: string; status: DemandStatus }>(`/demands/${id}/status`, params);
   return data;
 }

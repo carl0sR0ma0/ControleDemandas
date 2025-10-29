@@ -361,9 +361,6 @@ public static class DemandEndpoints
                     return Results.NotFound();
                 }
 
-                // Captura o responsável antes de atualizar o status
-                var responsibleUser = d.NextActionResponsible;
-
                 d.Status = dto.NewStatus;
 
                 var history = new StatusHistory
@@ -372,7 +369,7 @@ public static class DemandEndpoints
                     Status = dto.NewStatus,
                     Author = user.Identity?.Name ?? "sistema",
                     Note = dto.Note,
-                    ResponsibleUser = responsibleUser
+                    ResponsibleUser = dto.ResponsibleUser
                 };
 
                 db.StatusHistory.Add(history);
@@ -425,7 +422,7 @@ public static class DemandEndpoints
         string? DocumentUrl
     );
 
-    public record ChangeStatusDto(DemandStatus NewStatus, string? Note);
+    public record ChangeStatusDto(DemandStatus NewStatus, string? Note, string? ResponsibleUser);
 }
 
 

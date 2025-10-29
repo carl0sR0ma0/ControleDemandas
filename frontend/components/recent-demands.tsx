@@ -101,7 +101,7 @@ export function RecentDemands() {
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Tipo</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Área</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Solicitante</th>
-                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Responsável</th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Cliente</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Unidade</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Classificação</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Status</th>

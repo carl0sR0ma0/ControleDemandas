@@ -313,9 +313,9 @@ export function DemandsTable() {
                 </th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   <div className="flex items-center gap-2">
-                    Responsável
+                    Cliente
                     {!isLoading && items.length > 0 && (
-                      <FilterPopover column="responsible" title="Responsável" dataKey="responsible" />
+                      <FilterPopover column="responsible" title="Cliente" dataKey="responsible" />
                     )}
                   </div>
                 </th>

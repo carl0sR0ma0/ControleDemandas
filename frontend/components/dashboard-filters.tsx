@@ -115,11 +115,11 @@ export function DashboardFilters() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm text-slate-600">Responsável</Label>
+            <Label className="text-sm text-slate-600">Cliente</Label>
             <Input
               value={filters.responsavel}
               onChange={(e) => handleFilterChange("responsavel", e.target.value)}
-              placeholder="Buscar por responsável"
+              placeholder="Buscar por cliente"
             />
           </div>
 

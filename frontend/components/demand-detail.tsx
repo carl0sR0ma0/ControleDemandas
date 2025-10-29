@@ -205,7 +205,7 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
               </p>
             </div>
             <div>
-              <span className="text-sm text-slate-600">Responsável</span>
+              <span className="text-sm text-slate-600">Cliente</span>
               <p className="font-medium text-slate-800 mt-1">
                 {typeof demand.responsible === 'string' ? demand.responsible : "—"}
               </p>

@@ -126,7 +126,7 @@ export function useUpdateDemand(id: string) {
 
 export function useChangeDemandStatus(id: string) {
   return useMutation({
-    mutationFn: async (params: { newStatus: DemandStatus; note?: string }) => {
+    mutationFn: async (params: { newStatus: DemandStatus; note?: string; responsibleUser?: string }) => {
       return await changeDemandStatus(id, params);
     },
     onSuccess: () => {
