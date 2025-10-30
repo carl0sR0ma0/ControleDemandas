@@ -42,7 +42,7 @@ public class Demand
     public Guid UnitId { get; set; }
     public Unit Unit { get; set; } = default!;
     public Classification Classification { get; set; }
-    public Priority? Priority { get; set; }
+    public int? Priority { get; set; } // Valores 1-5, null quando não definido
 
     [MaxLength(120)] public string? Responsible { get; set; }
     public Guid? SystemVersionId { get; set; }
@@ -51,6 +51,10 @@ public class Demand
     [MaxLength(120)] public string? NextActionResponsible { get; set; }
     public DateTime? EstimatedDelivery { get; set; }
     public string? DocumentUrl { get; set; }
+
+    // Relação com Backlog
+    public Guid? BacklogId { get; set; }
+    public Backlog? Backlog { get; set; }
 
     public List<Attachment> Attachments { get; set; } = [];
     public List<StatusHistory> History { get; set; } = [];
@@ -168,4 +172,12 @@ public class ModuleEntity
     public bool Active { get; set; } = true;
     public Guid SystemEntityId { get; set; }
     public SystemEntity System { get; set; } = default!;
+}
+
+public class Backlog
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(100)] public string Name { get; set; } = default!;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public ICollection<Demand> Demands { get; set; } = [];
 }

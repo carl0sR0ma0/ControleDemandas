@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { DemandListItem, DemandDetail, DemandStatus, OccurrenceType, Classification, Priority } from "@/types/api";
+import type { DemandListItem, DemandDetail, DemandStatus, OccurrenceType, Classification } from "@/types/api";
 
 export interface DemandListResponse {
   total: number;
@@ -52,6 +52,7 @@ export async function listDemands(filters: DemandListFilters) {
     nextActionResponsible: x.nextActionResponsible ?? null,
     estimatedDelivery: x.estimatedDelivery ?? null,
     documentUrl: x.documentUrl ?? null,
+    backlogId: x.backlogId ?? null,
   }));
   return { total: data.total ?? items.length, page: data.page ?? 1, size: data.size ?? items.length, items };
 }
@@ -75,7 +76,7 @@ export interface CreateDemandDto {
   occurrenceType: OccurrenceType;
   unitId: string;
   classification: Classification;
-  priority?: Priority;
+  priority?: number | null;
   responsible?: string;
   systemVersionId?: string;
   documentUrl?: string;
@@ -95,7 +96,7 @@ export interface UpdateDemandDto {
   occurrenceType?: OccurrenceType;
   unitId?: string;
   classification?: Classification;
-  priority?: Priority;
+  priority?: number | null;
   responsible?: string;
   systemVersionId?: string;
   nextActionResponsible?: string;

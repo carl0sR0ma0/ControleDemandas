@@ -3,6 +3,7 @@ using System;
 using Api.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251030125240_addBacklog")]
+    partial class addBacklog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -42,7 +45,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Areas", (string)null);
+                    b.ToTable("Areas");
                 });
 
             modelBuilder.Entity("Api.Domain.Attachment", b =>
@@ -76,7 +79,7 @@ namespace Api.Migrations
 
                     b.HasIndex("DemandId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("Api.Domain.Backlog", b =>
@@ -97,7 +100,7 @@ namespace Api.Migrations
 
                     b.HasIndex("Name");
 
-                    b.ToTable("Backlogs", (string)null);
+                    b.ToTable("Backlogs");
                 });
 
             modelBuilder.Entity("Api.Domain.Demand", b =>
@@ -182,7 +185,7 @@ namespace Api.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Demands", (string)null);
+                    b.ToTable("Demands");
                 });
 
             modelBuilder.Entity("Api.Domain.ModuleEntity", b =>
@@ -207,7 +210,7 @@ namespace Api.Migrations
                     b.HasIndex("SystemEntityId", "Name")
                         .IsUnique();
 
-                    b.ToTable("Modules", (string)null);
+                    b.ToTable("Modules");
                 });
 
             modelBuilder.Entity("Api.Domain.PermissionEntity", b =>
@@ -243,7 +246,7 @@ namespace Api.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Permissions", (string)null);
+                    b.ToTable("Permissions");
 
                     b.HasData(
                         new
@@ -361,7 +364,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Profiles", (string)null);
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("Api.Domain.ProfilePermission", b =>
@@ -379,7 +382,7 @@ namespace Api.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("ProfilePermissions", (string)null);
+                    b.ToTable("ProfilePermissions");
                 });
 
             modelBuilder.Entity("Api.Domain.ProtocolCounter", b =>
@@ -398,7 +401,7 @@ namespace Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProtocolCounters", (string)null);
+                    b.ToTable("ProtocolCounters");
                 });
 
             modelBuilder.Entity("Api.Domain.StatusHistory", b =>
@@ -432,7 +435,7 @@ namespace Api.Migrations
 
                     b.HasIndex("DemandId");
 
-                    b.ToTable("StatusHistory", (string)null);
+                    b.ToTable("StatusHistory");
                 });
 
             modelBuilder.Entity("Api.Domain.SystemEntity", b =>
@@ -454,7 +457,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Systems", (string)null);
+                    b.ToTable("Systems");
                 });
 
             modelBuilder.Entity("Api.Domain.SystemVersion", b =>
@@ -479,7 +482,7 @@ namespace Api.Migrations
                     b.HasIndex("SystemEntityId", "Version")
                         .IsUnique();
 
-                    b.ToTable("SystemVersions", (string)null);
+                    b.ToTable("SystemVersions");
                 });
 
             modelBuilder.Entity("Api.Domain.Unit", b =>
@@ -501,7 +504,7 @@ namespace Api.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Units", (string)null);
+                    b.ToTable("Units");
                 });
 
             modelBuilder.Entity("Api.Domain.User", b =>
@@ -556,7 +559,7 @@ namespace Api.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -598,7 +601,7 @@ namespace Api.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("UserPermissions", (string)null);
+                    b.ToTable("UserPermissions");
 
                     b.HasData(
                         new

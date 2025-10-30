@@ -43,6 +43,8 @@ public static class DemandEndpoints
             string? responsavel = null,
             OccurrenceType? tipo = null,
             Classification? classificacao = null,
+            int? priority = null,
+            bool? hasBacklog = null,
             DateOnly? from = null,
             DateOnly? to = null) =>
         {
@@ -71,6 +73,14 @@ public static class DemandEndpoints
             }
             if (tipo is not null) qry = qry.Where(x => x.OccurrenceType == tipo);
             if (classificacao is not null) qry = qry.Where(x => x.Classification == classificacao);
+            if (priority is not null) qry = qry.Where(x => x.Priority == priority);
+            if (hasBacklog is not null)
+            {
+                if (hasBacklog.Value)
+                    qry = qry.Where(x => x.BacklogId != null);
+                else
+                    qry = qry.Where(x => x.BacklogId == null);
+            }
             if (from is not null) qry = qry.Where(x => x.OpenedAt >= from.Value.ToDateTime(TimeOnly.MinValue));
             if (to is not null) qry = qry.Where(x => x.OpenedAt < to.Value.AddDays(1).ToDateTime(TimeOnly.MinValue));
 
@@ -99,7 +109,8 @@ public static class DemandEndpoints
                     x.Status,
                     x.NextActionResponsible,
                     x.EstimatedDelivery,
-                    x.DocumentUrl
+                    x.DocumentUrl,
+                    backlogId = x.BacklogId
                 })
                 .ToListAsync();
 
@@ -222,7 +233,6 @@ public static class DemandEndpoints
                 OccurrenceType = dto.OccurrenceType,
                 UnitId = dto.UnitId,
                 Classification = dto.Classification,
-                Priority = dto.Priority,
                 Responsible = dto.Responsible,
                 SystemVersionId = dto.SystemVersionId,
                 DocumentUrl = dto.DocumentUrl
@@ -240,8 +250,8 @@ public static class DemandEndpoints
 
             if (!string.IsNullOrWhiteSpace(dto.ReporterEmail))
                 await mail.SendAsync(dto.ReporterEmail!,
-                    $"[Protocolo {d.Protocol}] SolicitaÃ§Ã£o recebida",
-                    $"<p>Sua solicitaÃ§Ã£o foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
+                    $"[Protocolo {d.Protocol}] Solicitação recebida",
+                    $"<p>Sua solicitação foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
 
             return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
         })
@@ -394,6 +404,40 @@ public static class DemandEndpoints
         })
         .AddEndpointFilter(new ValidationFilter<ChangeStatusDto>());
 
+        // PATCH /demands/{id}/priority - Atualizar prioridade
+        g.MapPatch("/{id:guid}/priority", [Authorize(Policy = "PERM:" + nameof(Permission.GerenciarBacklogs))] async (
+            Guid id, AppDbContext db, UpdatePriorityDemandDto dto, ILogger<Program> logger, ClaimsPrincipal user) =>
+        {
+            try
+            {
+                var demand = await db.Demands.FindAsync(id);
+                if (demand is null)
+                {
+                    logger.LogWarning("Demand {Id} not found", id);
+                    return Results.NotFound();
+                }
+
+                demand.Priority = dto.Priority;
+                await db.SaveChangesAsync();
+
+                var userId = user.FindFirst("sub")?.Value ?? "Unknown";
+                logger.LogInformation("Priority updated for demand {Id} to {Priority} by {UserId}",
+                    id, dto.Priority, userId);
+
+                return Results.Ok(new { id = demand.Id, priority = demand.Priority });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error updating priority for demand {Id}", id);
+                return Results.Problem(
+                    title: "Error updating priority",
+                    detail: ex.Message,
+                    statusCode: 500
+                );
+            }
+        })
+        .AddEndpointFilter(new ValidationFilter<UpdatePriorityDemandDto>());
+
         return app;
     }
 
@@ -406,7 +450,6 @@ public static class DemandEndpoints
         OccurrenceType OccurrenceType,
         Guid UnitId,
         Classification Classification,
-        Priority Priority,
         string? Responsible,
         Guid? SystemVersionId,
         string? DocumentUrl,
@@ -421,7 +464,7 @@ public static class DemandEndpoints
         OccurrenceType? OccurrenceType,
         Guid? UnitId,
         Classification? Classification,
-        Priority? Priority,
+        int? Priority,
         string? Responsible,
         Guid? SystemVersionId,
         string? NextActionResponsible,
@@ -430,6 +473,8 @@ public static class DemandEndpoints
     );
 
     public record ChangeStatusDto(DemandStatus NewStatus, string? Note, string? ResponsibleUser);
+
+    public record UpdatePriorityDemandDto(int? Priority);
 }
 
 

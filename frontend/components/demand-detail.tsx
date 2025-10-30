@@ -11,7 +11,7 @@ import { EditDemandForm } from "@/components/edit-demand-form"
 import Link from "next/link"
 import { useState } from "react"
 import { useDemandDetailByProtocol } from "@/hooks/useDemands"
-import { OccurrenceType, Classification, DemandStatus, Priority } from "@/types/api"
+import { OccurrenceType, Classification, DemandStatus } from "@/types/api"
 import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
 
 interface DemandDetailProps {
@@ -27,12 +27,14 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     switch (status) {
       case DemandStatus.Aberta:
         return "bg-[#FFA726] text-white"
+      case DemandStatus.Arquivado:
+        return "bg-[#78909C] text-white"
       case DemandStatus.Ranqueado:
         return "bg-[#B0BEC5] text-white"
-      case DemandStatus.Documentacao:
-        return "bg-[#29B6F6] text-white"
       case DemandStatus.Aprovacao:
         return "bg-[#66BB6A] text-white"
+      case DemandStatus.Documentacao:
+        return "bg-[#29B6F6] text-white"
       case DemandStatus.Execucao:
         return "bg-[#5C6BC0] text-white"
       case DemandStatus.Pausado:
@@ -50,12 +52,14 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     switch (status) {
       case DemandStatus.Aberta:
         return "Aberta"
+      case DemandStatus.Arquivado:
+        return "Arquivado"
       case DemandStatus.Ranqueado:
         return "Ranqueado"
-      case DemandStatus.Documentacao:
-        return "Documentação"
       case DemandStatus.Aprovacao:
         return "Aprovação"
+      case DemandStatus.Documentacao:
+        return "Documentação"
       case DemandStatus.Execucao:
         return "Execução"
       case DemandStatus.Pausado:
@@ -95,32 +99,19 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     }
   }
 
-  const getPriorityColor = (priority?: Priority | null) => {
+  const getPriorityColor = (priority?: number | null) => {
     if (!priority) return "bg-gray-500 text-white"
-    switch (priority) {
-      case Priority.Alta:
-        return "bg-red-500 text-white"
-      case Priority.Media:
-        return "bg-blue-500 text-white"
-      case Priority.Baixa:
-        return "bg-slate-400 text-white"
-      default:
-        return "bg-gray-500 text-white"
-    }
+    if (priority === 1) return "bg-red-600 text-white"
+    if (priority === 2) return "bg-orange-500 text-white"
+    if (priority === 3) return "bg-yellow-500 text-white"
+    if (priority === 4) return "bg-blue-500 text-white"
+    if (priority === 5) return "bg-slate-400 text-white"
+    return "bg-gray-500 text-white"
   }
 
-  const getPriorityLabel = (priority?: Priority | null) => {
+  const getPriorityLabel = (priority?: number | null) => {
     if (!priority) return "—"
-    switch (priority) {
-      case Priority.Alta:
-        return "Alta (3)"
-      case Priority.Media:
-        return "Média (2)"
-      case Priority.Baixa:
-        return "Baixa (1)"
-      default:
-        return String(priority)
-    }
+    return `Prioridade ${priority}`
   }
 
   const handleEditClick = () => {

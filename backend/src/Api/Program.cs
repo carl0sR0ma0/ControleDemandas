@@ -1,4 +1,5 @@
 using Api.Features.Auth;
+using Api.Features.Backlogs;
 using Api.Features.Dashboard;
 using Api.Features.Demands;
 using Api.Features.Users;
@@ -137,6 +138,7 @@ app.MapAuth();
 app.MapUserManagement();
 app.MapUserProfileEndpoints();
 app.MapDemandEndpoints();
+app.MapBacklogEndpoints();
 app.MapDashboard();
 app.MapInit();
 app.MapPermissionEndpoints();

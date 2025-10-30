@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { getSystems, getModules, getVersions, getAreas, getUnits } from "@/lib/api/configs";
 import { createDemand } from "@/lib/api/demands";
-import { Classification, OccurrenceType, Priority } from "@/types/api";
+import { Classification, OccurrenceType } from "@/types/api";
 import { getCurrentUser } from "@/hooks/useAuth";
 
 export function NewDemandForm() {
@@ -43,7 +43,6 @@ export function NewDemandForm() {
     systemVersionId: "",
     unitId: "",
     classification: "",
-    priority: "",
     responsible: "",
     requesterUserId: "",
     documentUrl: "",
@@ -60,11 +59,11 @@ export function NewDemandForm() {
     );
   }, []);
   // Opcoes (via API)
-  const { data: systems = [] } = useQuery({ queryKey: ["cfg","systems"], queryFn: getSystems });
-  const { data: areas = [] } = useQuery({ queryKey: ["cfg","areas"], queryFn: getAreas });
-  const { data: units = [] } = useQuery({ queryKey: ["cfg","units"], queryFn: getUnits });
-  const { data: versions = [] } = useQuery({ queryKey: ["cfg","versions", formData.systemId], queryFn: () => formData.systemId ? getVersions(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
-  const { data: modules = [] } = useQuery({ queryKey: ["cfg","modules", formData.systemId], queryFn: () => formData.systemId ? getModules(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
+  const { data: systems = [] } = useQuery({ queryKey: ["cfg", "systems"], queryFn: getSystems });
+  const { data: areas = [] } = useQuery({ queryKey: ["cfg", "areas"], queryFn: getAreas });
+  const { data: units = [] } = useQuery({ queryKey: ["cfg", "units"], queryFn: getUnits });
+  const { data: versions = [] } = useQuery({ queryKey: ["cfg", "versions", formData.systemId], queryFn: () => formData.systemId ? getVersions(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
+  const { data: modules = [] } = useQuery({ queryKey: ["cfg", "modules", formData.systemId], queryFn: () => formData.systemId ? getModules(formData.systemId) : Promise.resolve([]), enabled: !!formData.systemId });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -99,7 +98,6 @@ export function NewDemandForm() {
         occurrenceType: (Number(formData.occurrenceType) || OccurrenceType.Incremental) as OccurrenceType,
         unitId: formData.unitId,
         classification: (Number(formData.classification) || Classification.Baixo) as Classification,
-        priority: (Number(formData.priority) || Priority.Media) as Priority,
         systemVersionId: formData.systemVersionId || undefined,
         documentUrl: formData.documentUrl || undefined,
         reporterEmail: undefined,
@@ -115,7 +113,7 @@ export function NewDemandForm() {
 
   if (isSubmitted) {
     return (
-      <div className="w-full h-full px-0 py-6 ">
+      <div className="w-full h-full px-0 py-4">
         <div className="w-full text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
             <CheckCircle className="w-8 h-8 text-green-600" />
@@ -124,33 +122,18 @@ export function NewDemandForm() {
             <h2 className="text-2xl font-bold text-slate-800 mb-2">
               Demanda Criada com Sucesso!
             </h2>
-            <p className="text-slate-600 mb-4">
-              Sua solicitacao foi registrada no sistema.
+            <p className="text-slate-600 mb-4" >
+              Sua solicitação foi registrada no sistema.
+              Um e-mail de confirmação foi enviado com o numero do protocolo e
+              detalhes da solicitação.
             </p>
-            <div className="bg-[#04A4A1] text-white px-6 py-3 rounded-lg inline-block">
+            
+            <div className="bg-[#04A4A1] text-white px-6 py-3 rounded-lg inline-block mt-2">
               <span className="text-sm font-medium">Protocolo:</span>
               <span className="text-xl font-bold ml-2">
                 #{generatedProtocol}
               </span>
             </div>
-          </div>
-          <Alert>
-            <AlertDescription>
-              Um e-mail de confirmaAAo foi enviado com o numero do protocolo e
-              detalhes da solicitacao.
-            </AlertDescription>
-          </Alert>
-          <div className="flex gap-4 justify-center">
-            <Button
-              onClick={() => router.push(`/demandas/${generatedProtocol}`)}
-              className="bg-[#04A4A1] hover:bg-[#038a87]"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Ver Detalhes
-            </Button>
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Cadastrar Nova
-            </Button>
           </div>
         </div>
       </div>
@@ -176,9 +159,9 @@ export function NewDemandForm() {
 
       <div className="grid grid-cols-12 gap-4">
         {/* Selecionais primeiro */}
-        
 
-        
+
+
 
         {/* Tipo */}
         <div className="space-y-3 col-span-12">
@@ -200,7 +183,7 @@ export function NewDemandForm() {
                     <Info className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    implementacao de algo novo ou evoluAAo
+                    implementação de algo novo ou evolução
                   </TooltipContent>
                 </Tooltip>
               </Label>
@@ -417,40 +400,6 @@ export function NewDemandForm() {
           </RadioGroup>
         </div>
 
-        {/* Prioridade */}
-        <div className="space-y-2 col-span-12">
-          <Label htmlFor="priority" className="text-slate-700">
-            Prioridade <span className="text-red-500">*</span>
-          </Label>
-          <RadioGroup
-            value={formData.priority}
-            onValueChange={(value) =>
-              handleInputChange("priority", value)
-            }
-            required
-            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
-          >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value={String(Priority.Baixa)} id="prioridade-baixa" />
-              <Label htmlFor="prioridade-baixa" className="flex items-center gap-1">
-                <Badge variant="secondary" className="bg-slate-400">Baixa (1)</Badge>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value={String(Priority.Media)} id="prioridade-media" />
-              <Label htmlFor="prioridade-media" className="flex items-center gap-1">
-                <Badge className="bg-blue-500">Média (2)</Badge>
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value={String(Priority.Alta)} id="prioridade-alta" />
-              <Label htmlFor="prioridade-alta" className="flex items-center gap-1">
-                <Badge variant="destructive">Alta (3)</Badge>
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
-
         <Separator className="col-span-12" />
 
         {/* Descricao */}
@@ -515,7 +464,7 @@ export function NewDemandForm() {
           )}
         </div>
 
-        
+
 
         {/* Documento */}
         <div className="space-y-2 col-span-12 md:col-span-6">

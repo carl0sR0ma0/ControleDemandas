@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -14,17 +14,57 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDemandList } from "@/hooks/useDemands";
-import { OccurrenceType, Classification, DemandStatus, Priority, DemandListItem } from "@/types/api";
+import { OccurrenceType, Classification, DemandStatus, DemandListItem } from "@/types/api";
+import { PriorityCell } from "@/components/priority-cell";
+import { useAuth } from "@/hooks/useAuth";
 
-export function DemandsTable() {
+interface DemandsTableProps {
+  selectedDemands?: string[];
+  onSelectionChange?: (selectedIds: string[]) => void;
+}
+
+export function DemandsTable({ selectedDemands = [], onSelectionChange }: DemandsTableProps = {}) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [page, setPage] = useState(1);
-  const size = 10;
 
-  const { data, isLoading } = useDemandList({ page, size, q: searchTerm || undefined });
+  const { data, isLoading } = useDemandList({ page: 1, size: 1000, q: searchTerm || undefined });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+
+  const { user } = useAuth();
+  const canManageBacklogs = user && (user.permissions & 512) === 512;
+
+  const handleSelectDemand = (demandId: string) => {
+    if (!onSelectionChange) return;
+
+    // Verificar se a demanda já está em um backlog
+    const demand = items.find(d => d.id === demandId);
+    if (demand?.backlogId) {
+      return; // Não permitir selecionar demandas que já estão em backlog
+    }
+
+    const newSelection = selectedDemands.includes(demandId)
+      ? selectedDemands.filter(id => id !== demandId)
+      : [...selectedDemands, demandId];
+
+    onSelectionChange(newSelection);
+  };
+
+  const handleSelectAll = () => {
+    if (!onSelectionChange) return;
+
+    // Filtrar demandas que não estão em backlog
+    const selectableItems = items.filter(d => !d.backlogId);
+    const selectableIds = selectableItems.map(d => d.id);
+
+    if (selectedDemands.length === selectableIds.length && selectableIds.length > 0) {
+      onSelectionChange([]);
+    } else {
+      onSelectionChange(selectableIds);
+    }
+  };
+
+  const showCheckboxes = canManageBacklogs && onSelectionChange;
 
   const onRowDoubleClick = (protocol: string) => {
     router.push(`/demandas/${protocol}`);
@@ -56,44 +96,23 @@ export function DemandsTable() {
     }
   };
 
-  const getPriorityColor = (priority?: Priority | null) => {
-    if (!priority) return "bg-gray-500 text-white";
-    switch (priority) {
-      case Priority.Alta:
-        return "bg-red-500 text-white";
-      case Priority.Media:
-        return "bg-blue-500 text-white";
-      case Priority.Baixa:
-        return "bg-slate-400 text-white";
-      default:
-        return "bg-gray-500 text-white";
-    }
-  };
-
-  const getPriorityLabel = (priority?: Priority | null) => {
-    if (!priority) return "—";
-    switch (priority) {
-      case Priority.Alta:
-        return "Alta (3)";
-      case Priority.Media:
-        return "Média (2)";
-      case Priority.Baixa:
-        return "Baixa (1)";
-      default:
-        return String(priority);
-    }
+  const getPriorityLabel = (priority?: number | null) => {
+    if (!priority) return "Sem prioridade";
+    return `Prioridade ${priority}`;
   };
 
   const getStatusColor = (status: DemandStatus) => {
     switch (status) {
       case DemandStatus.Aberta:
         return "bg-[#FFA726] text-white";
+      case DemandStatus.Arquivado:
+        return "bg-[#78909C] text-white";
       case DemandStatus.Ranqueado:
         return "bg-[#B0BEC5] text-white";
-      case DemandStatus.Documentacao:
-        return "bg-[#29B6F6] text-white";
       case DemandStatus.Aprovacao:
         return "bg-[#66BB6A] text-white";
+      case DemandStatus.Documentacao:
+        return "bg-[#29B6F6] text-white";
       case DemandStatus.Execucao:
         return "bg-[#5C6BC0] text-white";
       case DemandStatus.Pausado:
@@ -111,12 +130,14 @@ export function DemandsTable() {
     switch (status) {
       case DemandStatus.Aberta:
         return "Aberta";
+      case DemandStatus.Arquivado:
+        return "Arquivado";
       case DemandStatus.Ranqueado:
         return "Ranqueado";
-      case DemandStatus.Documentacao:
-        return "Documentação";
       case DemandStatus.Aprovacao:
         return "Aprovação";
+      case DemandStatus.Documentacao:
+        return "Documentação";
       case DemandStatus.Execucao:
         return "Execução";
       case DemandStatus.Pausado:
@@ -305,10 +326,21 @@ export function DemandsTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[600px]">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b border-slate-200">
+                {showCheckboxes && (
+                  <th className="text-left py-3 px-2 text-sm font-medium text-slate-600 w-12">
+                    <Checkbox
+                      checked={
+                        items.filter(d => !d.backlogId).length > 0 &&
+                        selectedDemands.length === items.filter(d => !d.backlogId).length
+                      }
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </th>
+                )}
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   Protocolo
                 </th>
@@ -395,20 +427,46 @@ export function DemandsTable() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={12}>Carregando...</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={showCheckboxes ? 13 : 12}>Carregando...</td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={12}>Nenhuma demanda encontrada.</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={showCheckboxes ? 13 : 12}>Nenhuma demanda encontrada.</td>
                 </tr>
               ) : (
-                filteredItems.map((d: DemandListItem) => (
-                  <tr
-                    key={d.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                    onDoubleClick={() => onRowDoubleClick(d.protocol)}
-                  >
-                    <td className="py-3 px-2 font-medium text-[#04A4A1]">{String(d.protocol)}</td>
+                filteredItems.map((d: DemandListItem) => {
+                  const hasBacklog = !!d.backlogId;
+
+                  return (
+                    <tr
+                      key={d.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                      onDoubleClick={() => onRowDoubleClick(d.protocol)}
+                    >
+                      {showCheckboxes && (
+                        <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
+                          {hasBacklog ? (
+                            <div className="flex items-center justify-center w-4 h-4 bg-gray-300 rounded opacity-50">
+                              <span className="text-xs text-gray-600">🔒</span>
+                            </div>
+                          ) : (
+                            <Checkbox
+                              checked={selectedDemands.includes(d.id)}
+                              onCheckedChange={() => handleSelectDemand(d.id)}
+                            />
+                          )}
+                        </td>
+                      )}
+                      <td className="py-3 px-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-[#04A4A1]">{String(d.protocol)}</span>
+                        {d.backlogId && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded" title="Em backlog">
+                            📋 Backlog
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3 px-2 text-sm text-slate-600">{new Date(d.openedAt).toLocaleDateString("pt-BR")}</td>
                     <td className="py-3 px-2 text-sm text-slate-600">
                       {d.systemVersion && typeof d.systemVersion === 'object' && d.systemVersion.version
@@ -450,40 +508,31 @@ export function DemandsTable() {
                         {String(d.classification)}
                       </Badge>
                     </td>
-                    <td className="py-3 px-2">
-                      <Badge className={getPriorityColor(d.priority)}>
-                        {getPriorityLabel(d.priority)}
-                      </Badge>
+                    <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
+                      <PriorityCell
+                        demandId={d.id}
+                        currentPriority={d.priority ?? null}
+                        canEdit={canManageBacklogs ?? false}
+                      />
                     </td>
                     <td className="py-3 px-2">
                       <Badge className={getStatusColor(d.status)}>{String(getStatusLabel(d.status))}</Badge>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-slate-600">Total: {total}</div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Button>
-            <div className="text-sm text-slate-600">Página {page}</div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => (items.length < size ? p : p + 1))}
-              disabled={items.length < size}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        {!isLoading && filteredItems.length > 0 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-slate-600">
+              Total: {filteredItems.length} demanda{filteredItems.length !== 1 ? "s" : ""}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

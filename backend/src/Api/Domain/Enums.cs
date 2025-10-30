@@ -3,13 +3,14 @@ namespace Api.Domain;
 public enum DemandStatus
 {
     Aberta = 0,
-    Ranqueado = 1,
-    Documentacao = 2,
+    Arquivado = 1,
+    Ranqueado = 2,
     Aprovacao = 3,
-    Execucao = 4,
-    Pausado = 5,
-    Validacao = 6,
-    Concluida = 7
+    Documentacao = 4,
+    Execucao = 5,
+    Pausado = 6,
+    Validacao = 7,
+    Concluida = 8
 }
 
 [Flags]
@@ -24,9 +25,9 @@ public enum Permission : long
     NotificarEmail        = 1 << 5,  // 32
     GerenciarUsuarios     = 1 << 6,  // 64
     GerenciarPerfis       = 1 << 7,  // 128
-    Configuracoes         = 1 << 8   // 256
+    Configuracoes         = 1 << 8,  // 256
+    GerenciarBacklogs     = 1 << 9   // 512
 }
 
 public enum OccurrenceType { Incremental = 1, Melhoria = 2, Bug = 3 }
 public enum Classification { Urgente = 1, Medio = 2, Baixo = 3 }
-public enum Priority { Baixa = 1, Media = 2, Alta = 3 }

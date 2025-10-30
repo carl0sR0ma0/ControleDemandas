@@ -9,12 +9,14 @@ const getStatusLabel = (status: DemandStatus) => {
   switch (status) {
     case DemandStatus.Aberta:
       return "Aberta"
+    case DemandStatus.Arquivado:
+      return "Arquivado"
     case DemandStatus.Ranqueado:
       return "Ranqueado"
-    case DemandStatus.Documentacao:
-      return "Documentação"
     case DemandStatus.Aprovacao:
       return "Aprovação"
+    case DemandStatus.Documentacao:
+      return "Documentação"
     case DemandStatus.Execucao:
       return "Execução"
     case DemandStatus.Pausado:

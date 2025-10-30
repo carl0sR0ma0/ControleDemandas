@@ -15,7 +15,6 @@ import type {
   DemandStatus,
   OccurrenceType,
   Classification,
-  Priority,
 } from "../types/api";
 import { queryClient } from "../lib/queryClient";
 
@@ -36,6 +35,9 @@ export interface DemandListFilters {
   classificacao?: Classification;
   from?: string;
   to?: string;
+  priority?: number;
+  hasBacklog?: boolean;
+  backlogId?: string;
 }
 
 export function useDemandList(filters: DemandListFilters) {
@@ -78,7 +80,7 @@ export interface CreateDemandDto {
   occurrenceType: OccurrenceType;
   unitId: string;
   classification: Classification;
-  priority?: Priority;
+  priority?: number | null;
   responsible?: string;
   systemVersionId?: string;
   documentUrl?: string;
@@ -105,7 +107,7 @@ export interface UpdateDemandDto {
   occurrenceType?: OccurrenceType;
   unitId?: string;
   classification?: Classification;
-  priority?: Priority;
+  priority?: number | null;
   responsible?: string;
   systemVersionId?: string;
   nextActionResponsible?: string;

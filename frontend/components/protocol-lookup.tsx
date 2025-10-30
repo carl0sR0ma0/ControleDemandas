@@ -78,9 +78,12 @@ export function ProtocolLookup() {
   const getStatusColor = (status: string) => {
     const colors = {
       Aberta: 'bg-[#FFA726] text-white',
+      Arquivado: 'bg-[#78909C] text-white',
       Ranqueado: 'bg-[#B0BEC5] text-white',
       Aprovacao: 'bg-[#66BB6A] text-white',
+      Documentacao: 'bg-[#29B6F6] text-white',
       Execucao: 'bg-[#5C6BC0] text-white',
+      Pausado: 'bg-[#FFA726] text-white',
       Validacao: 'bg-[#9C27B0] text-white',
       Concluida: 'bg-[#7CB342] text-white',
     };
@@ -90,9 +93,12 @@ export function ProtocolLookup() {
   const getStatusLabel = (status: string) => {
     const labels = {
       Aberta: 'Aberta',
+      Arquivado: 'Arquivado',
       Ranqueado: 'Ranqueado',
       Aprovacao: 'Aprovação',
+      Documentacao: 'Documentação',
       Execucao: 'Execução',
+      Pausado: 'Pausado',
       Validacao: 'Validação',
       Concluida: 'Concluída',
     };
@@ -249,7 +255,7 @@ export function ProtocolLookup() {
             </CardHeader>
             <CardContent>
               <StatusStepper
-                currentStatus={getStatusLabel(searchResult.status)}
+                currentStatus={searchResult.status}
                 history={searchResult.steps.map((step) => ({
                   id: step.date,
                   status: step.status as DemandStatus,

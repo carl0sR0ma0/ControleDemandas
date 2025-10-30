@@ -1,8 +1,9 @@
 export enum DemandStatus {
   Aberta = "Aberta",
+  Arquivado = "Arquivado",
   Ranqueado = "Ranqueado",
-  Documentacao = "Documentacao",
   Aprovacao = "Aprovacao",
+  Documentacao = "Documentacao",
   Execucao = "Execucao",
   Pausado = "Pausado",
   Validacao = "Validacao",
@@ -19,11 +20,6 @@ export enum Classification {
   Medio = "Medio",
   Baixo = "Baixo",
 }
-export enum Priority {
-  Baixa = "Baixa",
-  Media = "Media",
-  Alta = "Alta",
-}
 
 export type Permission =
   | 0 // None
@@ -35,7 +31,8 @@ export type Permission =
   | 32 // NotificarEmail
   | 64 // GerenciarUsuarios
   | 128 // GerenciarPerfis
-  | 256; // Configuracoes
+  | 256 // Configuracoes
+  | 512; // GerenciarBacklogs
 // … lembre: isso é bitmask; o backend retorna um número somado (long)
 
 // Usuário (resumo retornado pelo /auth/login)
@@ -60,11 +57,12 @@ export interface DemandListItem {
   requester?: { id: string; name: string; email: string } | null;
   responsible?: string | null;
   classification: Classification;
-  priority?: Priority | null;
+  priority?: number | null; // Agora é número de 1-5 ao invés de enum
   status: DemandStatus;
   nextActionResponsible?: string | null;
   estimatedDelivery?: string | null;
   documentUrl?: string | null;
+  backlogId?: string | null;
 }
 
 export interface DemandDetail {
@@ -75,7 +73,7 @@ export interface DemandDetail {
   observation?: string | null;
   occurrenceType: OccurrenceType;
   classification: Classification;
-  priority?: Priority | null;
+  priority?: number | null; // Agora é número de 1-5 ao invés de enum
   status: DemandStatus;
   system?: { id: string; name: string } | null;
   module?: { id: string; name: string; systemId: string } | null;
@@ -107,6 +105,38 @@ export interface StatusHistory {
   author: string;
   note?: string | null;
   responsibleUser?: string | null;
+}
+
+// Backlogs
+export interface BacklogSummary {
+  id: string;
+  name: string;
+  demandsCount: number;
+  createdAt: string;
+}
+
+export interface BacklogDetail {
+  id: string;
+  name: string;
+  createdAt: string;
+  demands: BacklogDemand[];
+}
+
+export interface BacklogDemand {
+  id: string;
+  protocol: string;
+  description: string;
+  priority: number | null;
+  status: string;
+}
+
+export interface CreateBacklogPayload {
+  name: string;
+  demandIds: string[];
+}
+
+export interface UpdatePriorityPayload {
+  priority: number | null;
 }
 
 // Dashboard

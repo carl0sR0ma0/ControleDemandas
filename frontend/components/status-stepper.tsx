@@ -50,9 +50,10 @@ function TooltipPortal({ children, targetRef, show }: TooltipPortalProps) {
 export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
   const statusOrder = [
     { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
+    { key: DemandStatus.Arquivado, name: "Arquivado", color: "#78909C" },
     { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#B0BEC5" },
-    { key: DemandStatus.Documentacao, name: "Documentação", color: "#29B6F6" },
     { key: DemandStatus.Aprovacao, name: "Aprovação", color: "#66BB6A" },
+    { key: DemandStatus.Documentacao, name: "Documentação", color: "#29B6F6" },
     { key: DemandStatus.Execucao, name: "Execução", color: "#5C6BC0" },
     { key: DemandStatus.Pausado, name: "Pausado", color: "#FFA726" },
     { key: DemandStatus.Validacao, name: "Validação", color: "#9C27B0" },
@@ -76,7 +77,7 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
     regressionColor: getRegressionColor(regressions.get(s.key) || 0),
   }))
 
-  const currentIndex = steps.findIndex((step) => step.name === currentStatus)
+  const currentIndex = steps.findIndex((step) => step.key === currentStatus || step.name === currentStatus)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const circleRefs = useRef<(HTMLDivElement | null)[]>([])
 

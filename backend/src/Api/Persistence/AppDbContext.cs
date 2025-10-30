@@ -19,6 +19,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<SystemVersion> SystemVersions => Set<SystemVersion>();
     public DbSet<ModuleEntity> Modules => Set<ModuleEntity>();
+    public DbSet<Backlog> Backlogs => Set<Backlog>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -39,6 +40,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(d => d.Unit).WithMany().HasForeignKey(d => d.UnitId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Demand>()
             .HasOne(d => d.SystemVersion).WithMany().HasForeignKey(d => d.SystemVersionId).OnDelete(DeleteBehavior.SetNull);
+        b.Entity<Demand>()
+            .HasOne(d => d.Backlog).WithMany(bl => bl.Demands).HasForeignKey(d => d.BacklogId).OnDelete(DeleteBehavior.SetNull);
+
+        // Map Backlogs
+        b.Entity<Backlog>().HasIndex(x => x.Name);
 
         // Map Permissions
         b.Entity<PermissionEntity>().HasIndex(x => x.Code).IsUnique();
@@ -94,7 +100,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var pUsers = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111117"), Code = nameof(Permission.GerenciarUsuarios), Name = "Gerenciar Usuários", Category = "Sistema", Description = "Criar/editar usuários" };
         var pProfiles = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111118"), Code = nameof(Permission.GerenciarPerfis), Name = "Gerenciar Perfis", Category = "Sistema", Description = "Criar/editar perfis" };
         var pConfig = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111119"), Code = nameof(Permission.Configuracoes), Name = "Configurações", Category = "Sistema", Description = "Acessar configurações" };
-        b.Entity<PermissionEntity>().HasData(pDash, pView, pCreate, pEditStatus, pEditDemand, pNotify, pUsers, pProfiles, pConfig);
+        var pBacklogs = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-11111111111a"), Code = nameof(Permission.GerenciarBacklogs), Name = "Gerenciar Backlogs", Category = "Demandas", Description = "Criar e gerenciar backlogs, editar prioridades" };
+        b.Entity<PermissionEntity>().HasData(pDash, pView, pCreate, pEditStatus, pEditDemand, pNotify, pUsers, pProfiles, pConfig, pBacklogs);
 
         // Seed Users
         var adminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -134,6 +141,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             new UserPermission { UserId = adminId, PermissionId = pUsers.Id, Granted = true },
             new UserPermission { UserId = adminId, PermissionId = pProfiles.Id, Granted = true },
             new UserPermission { UserId = adminId, PermissionId = pConfig.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pBacklogs.Id, Granted = true },
 
             // Gestor tem permissões operacionais
             new UserPermission { UserId = gestorId, PermissionId = pDash.Id, Granted = true },

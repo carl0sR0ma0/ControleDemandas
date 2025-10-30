@@ -41,3 +41,13 @@ public class ChangeStatusValidator : AbstractValidator<DemandEndpoints.ChangeSta
     }
 }
 
+public class UpdatePriorityDemandValidator : AbstractValidator<DemandEndpoints.UpdatePriorityDemandDto>
+{
+    public UpdatePriorityDemandValidator()
+    {
+        RuleFor(x => x.Priority)
+            .Must(p => p == null || (p >= 1 && p <= 5))
+            .WithMessage("Prioridade deve estar entre 1 e 5");
+    }
+}
+

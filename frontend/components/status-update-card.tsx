@@ -23,13 +23,14 @@ interface StatusUpdateCardProps {
 
 // Workflow flexível: define as transições permitidas
 const STATUS_TRANSITIONS: Record<DemandStatus, DemandStatus[]> = {
-  [DemandStatus.Aberta]: [DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Ranqueado]: [DemandStatus.Documentacao, DemandStatus.Aberta, DemandStatus.Concluida],
-  [DemandStatus.Documentacao]: [DemandStatus.Aprovacao, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Aprovacao]: [DemandStatus.Execucao, DemandStatus.Documentacao, DemandStatus.Concluida],
-  [DemandStatus.Execucao]: [DemandStatus.Pausado, DemandStatus.Validacao, DemandStatus.Aprovacao, DemandStatus.Concluida],
+  [DemandStatus.Aberta]: [DemandStatus.Arquivado, DemandStatus.Ranqueado, DemandStatus.Concluida],
+  [DemandStatus.Arquivado]: [DemandStatus.Ranqueado, DemandStatus.Aberta],
+  [DemandStatus.Ranqueado]: [DemandStatus.Aprovacao, DemandStatus.Arquivado, DemandStatus.Aberta, DemandStatus.Concluida],
+  [DemandStatus.Aprovacao]: [DemandStatus.Documentacao, DemandStatus.Ranqueado, DemandStatus.Concluida],
+  [DemandStatus.Documentacao]: [DemandStatus.Execucao, DemandStatus.Aprovacao, DemandStatus.Concluida],
+  [DemandStatus.Execucao]: [DemandStatus.Pausado, DemandStatus.Validacao, DemandStatus.Documentacao, DemandStatus.Concluida],
   [DemandStatus.Pausado]: [DemandStatus.Execucao, DemandStatus.Validacao],
-  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Pausado],
+  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Pausado, DemandStatus.Execucao],
   [DemandStatus.Concluida]: [], // Status final - não pode mudar
 }
 
@@ -37,12 +38,14 @@ const getStatusLabel = (status: DemandStatus) => {
   switch (status) {
     case DemandStatus.Aberta:
       return "Aberta"
+    case DemandStatus.Arquivado:
+      return "Arquivado"
     case DemandStatus.Ranqueado:
       return "Ranqueado"
-    case DemandStatus.Documentacao:
-      return "Documentação"
     case DemandStatus.Aprovacao:
       return "Aprovação"
+    case DemandStatus.Documentacao:
+      return "Documentação"
     case DemandStatus.Execucao:
       return "Execução"
     case DemandStatus.Pausado:
@@ -60,12 +63,14 @@ const getStatusColor = (status: DemandStatus) => {
   switch (status) {
     case DemandStatus.Aberta:
       return "bg-[#FFA726] text-white"
+    case DemandStatus.Arquivado:
+      return "bg-[#78909C] text-white"
     case DemandStatus.Ranqueado:
       return "bg-[#B0BEC5] text-white"
-    case DemandStatus.Documentacao:
-      return "bg-[#29B6F6] text-white"
     case DemandStatus.Aprovacao:
       return "bg-[#66BB6A] text-white"
+    case DemandStatus.Documentacao:
+      return "bg-[#29B6F6] text-white"
     case DemandStatus.Execucao:
       return "bg-[#5C6BC0] text-white"
     case DemandStatus.Pausado:

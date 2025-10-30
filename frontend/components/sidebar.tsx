@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  FolderKanban,
 } from "lucide-react";
 
 // (opcional) bits iguais aos do backend
@@ -37,6 +38,7 @@ const PERMS = {
   GerenciarUsuarios: 64,
   GerenciarPerfis: 128,
   Configuracoes: 256,
+  GerenciarBacklogs: 512,
 };
 
 export function Sidebar() {
@@ -76,6 +78,7 @@ export function Sidebar() {
     ...(hasPermission(PERMS.AcessarDashboard) ? [{ icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" }] : []),
     ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: FileText, label: "Demandas", href: "/demandas" }] : []),
     ...(hasPermission(PERMS.RegistrarDemandas) ? [{ icon: Plus, label: "Nova Demanda", href: "/demandas/nova" }] : []),
+    ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: FolderKanban, label: "Backlogs", href: "/backlogs" }] : []),
     { icon: Search, label: "Consultar Protocolo", href: "/consultar" },
     ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
     ...(hasPermission(PERMS.GerenciarPerfis) ? [{ icon: Shield, label: "Perfis", href: "/perfis" }] : []),
