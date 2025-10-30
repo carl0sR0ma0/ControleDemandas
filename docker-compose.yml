@@ -1,0 +1,134 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: controle-demandas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: controle_demandas
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - demandas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (.NET 8)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: controle-demandas-api
+    restart: unless-stopped
+    environment:
+      # Database
+      ConnectionStrings__postgres: "Host=db;Port=5432;Database=controle_demandas;Username=postgres;Password=${DB_PASSWORD:-postgres};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;Connection Idle Lifetime=300;Connection Pruning Interval=10"
+
+      # JWT
+      Jwt__Issuer: "controle-demandas"
+      Jwt__Audience: "controle-demandas"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:-troque-por-uma-chave-bem-longa-e-secreta-em-producao}"
+      Jwt__ExpHours: "8"
+
+      # CORS
+      Cors__Origins__0: "http://localhost:3000"
+      Cors__Origins__1: "http://frontend:3000"
+      Cors__Origins__2: "${FRONTEND_URL:-http://localhost:3000}"
+
+      # SMTP
+      Smtp__Host: "${SMTP_HOST:-localhost}"
+      Smtp__Port: "${SMTP_PORT:-25}"
+      Smtp__EnableSsl: "${SMTP_SSL:-false}"
+      Smtp__User: "${SMTP_USER:-}"
+      Smtp__Password: "${SMTP_PASSWORD:-}"
+      Smtp__From: "${SMTP_FROM:-no-reply@empresa.com}"
+
+      # Logging
+      Serilog__MinimumLevel: "${LOG_LEVEL:-Information}"
+
+      # Init Token
+      Init__Token: "${INIT_TOKEN:-troque-este-token-para-produção}"
+
+      # ASP.NET Core
+      ASPNETCORE_ENVIRONMENT: "${ENVIRONMENT:-Production}"
+      ASPNETCORE_URLS: "http://+:8080"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - backend_storage:/app/storage
+      - backend_wwwroot:/app/wwwroot
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - demandas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: controle-demandas-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8080}"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - demandas-network
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  # PgAdmin (Opcional - remover em produção)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: controle-demandas-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-8081}:80"
+    depends_on:
+      - db
+    networks:
+      - demandas-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_wwwroot:
+    driver: local
+
+networks:
+  demandas-network:
+    driver: bridge
