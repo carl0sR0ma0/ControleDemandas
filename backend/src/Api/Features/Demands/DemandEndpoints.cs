@@ -95,6 +95,7 @@ public static class DemandEndpoints
                     requester = new { id = x.RequesterUserId, name = x.RequesterUser.Name, email = x.RequesterUser.Email },
                     x.Responsible,
                     x.Classification,
+                    x.Priority,
                     x.Status,
                     x.NextActionResponsible,
                     x.EstimatedDelivery,
@@ -126,6 +127,7 @@ public static class DemandEndpoints
                     x.Observation,
                     x.OccurrenceType,
                     x.Classification,
+                    x.Priority,
                     x.Status,
                     system = new { id = x.Module.System.Id, name = x.Module.System.Name },
                     module = new { id = x.ModuleId, name = x.Module.Name, systemId = x.Module.SystemEntityId },
@@ -165,6 +167,7 @@ public static class DemandEndpoints
                     x.Observation,
                     x.OccurrenceType,
                     x.Classification,
+                    x.Priority,
                     x.Status,
                     system = new { id = x.Module.System.Id, name = x.Module.System.Name },
                     module = new { id = x.ModuleId, name = x.Module.Name, systemId = x.Module.SystemEntityId },
@@ -219,6 +222,7 @@ public static class DemandEndpoints
                 OccurrenceType = dto.OccurrenceType,
                 UnitId = dto.UnitId,
                 Classification = dto.Classification,
+                Priority = dto.Priority,
                 Responsible = dto.Responsible,
                 SystemVersionId = dto.SystemVersionId,
                 DocumentUrl = dto.DocumentUrl
@@ -326,6 +330,7 @@ public static class DemandEndpoints
                 if (dto.Observation is not null) d.Observation = dto.Observation;
                 if (dto.OccurrenceType is not null) d.OccurrenceType = dto.OccurrenceType.Value;
                 if (dto.Classification is not null) d.Classification = dto.Classification.Value;
+                if (dto.Priority is not null) d.Priority = dto.Priority.Value;
                 if (dto.Responsible is not null) d.Responsible = dto.Responsible;
                 if (dto.NextActionResponsible is not null) d.NextActionResponsible = dto.NextActionResponsible;
                 if (dto.EstimatedDelivery is not null) d.EstimatedDelivery = dto.EstimatedDelivery;
@@ -401,6 +406,7 @@ public static class DemandEndpoints
         OccurrenceType OccurrenceType,
         Guid UnitId,
         Classification Classification,
+        Priority Priority,
         string? Responsible,
         Guid? SystemVersionId,
         string? DocumentUrl,
@@ -415,6 +421,7 @@ public static class DemandEndpoints
         OccurrenceType? OccurrenceType,
         Guid? UnitId,
         Classification? Classification,
+        Priority? Priority,
         string? Responsible,
         Guid? SystemVersionId,
         string? NextActionResponsible,

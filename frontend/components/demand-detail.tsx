@@ -11,7 +11,7 @@ import { EditDemandForm } from "@/components/edit-demand-form"
 import Link from "next/link"
 import { useState } from "react"
 import { useDemandDetailByProtocol } from "@/hooks/useDemands"
-import { OccurrenceType, Classification, DemandStatus } from "@/types/api"
+import { OccurrenceType, Classification, DemandStatus, Priority } from "@/types/api"
 import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
 
 interface DemandDetailProps {
@@ -92,6 +92,34 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
         return "bg-gray-500 text-white"
       default:
         return "bg-gray-500 text-white"
+    }
+  }
+
+  const getPriorityColor = (priority?: Priority | null) => {
+    if (!priority) return "bg-gray-500 text-white"
+    switch (priority) {
+      case Priority.Alta:
+        return "bg-red-500 text-white"
+      case Priority.Media:
+        return "bg-blue-500 text-white"
+      case Priority.Baixa:
+        return "bg-slate-400 text-white"
+      default:
+        return "bg-gray-500 text-white"
+    }
+  }
+
+  const getPriorityLabel = (priority?: Priority | null) => {
+    if (!priority) return "—"
+    switch (priority) {
+      case Priority.Alta:
+        return "Alta (3)"
+      case Priority.Media:
+        return "Média (2)"
+      case Priority.Baixa:
+        return "Baixa (1)"
+      default:
+        return String(priority)
     }
   }
 
@@ -227,7 +255,15 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
               </div>
             </div>
 
-            {/* Linha: Solicitante */}
+            {/* Linha: Prioridade, Solicitante */}
+            <div>
+              <span className="text-sm text-slate-600">Prioridade</span>
+              <div className="mt-1">
+                <Badge className={getPriorityColor(demand.priority)}>
+                  {getPriorityLabel(demand.priority)}
+                </Badge>
+              </div>
+            </div>
             <div>
               <span className="text-sm text-slate-600">Solicitante</span>
               <p className="font-medium text-slate-800 mt-1">

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useDemandList } from "@/hooks/useDemands";
-import { OccurrenceType, Classification, DemandStatus } from "@/types/api";
+import { OccurrenceType, Classification, DemandStatus, Priority } from "@/types/api";
 
 export function RecentDemands() {
   const router = useRouter();
@@ -39,6 +39,34 @@ export function RecentDemands() {
         return "bg-gray-500 text-white";
       default:
         return "bg-gray-500 text-white";
+    }
+  };
+
+  const getPriorityColor = (priority?: Priority | null) => {
+    if (!priority) return "bg-gray-500 text-white";
+    switch (priority) {
+      case Priority.Alta:
+        return "bg-red-500 text-white";
+      case Priority.Media:
+        return "bg-blue-500 text-white";
+      case Priority.Baixa:
+        return "bg-slate-400 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
+  const getPriorityLabel = (priority?: Priority | null) => {
+    if (!priority) return "—";
+    switch (priority) {
+      case Priority.Alta:
+        return "Alta (3)";
+      case Priority.Media:
+        return "Média (2)";
+      case Priority.Baixa:
+        return "Baixa (1)";
+      default:
+        return String(priority);
     }
   };
 
@@ -112,17 +140,18 @@ export function RecentDemands() {
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Cliente</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Unidade</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Classificação</th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Prioridade</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Status</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={11}>Carregando...</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={12}>Carregando...</td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={11}>Sem registros.</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={12}>Sem registros.</td>
                 </tr>
               ) : (
                 items.map((d) => (
@@ -171,6 +200,11 @@ export function RecentDemands() {
                     <td className="py-3 px-2">
                       <Badge className={getClassificationColor(d.classification)}>
                         {String(d.classification)}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-2">
+                      <Badge className={getPriorityColor(d.priority)}>
+                        {getPriorityLabel(d.priority)}
                       </Badge>
                     </td>
                     <td className="py-3 px-2">

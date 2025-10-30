@@ -19,6 +19,11 @@ export enum Classification {
   Medio = "Medio",
   Baixo = "Baixo",
 }
+export enum Priority {
+  Baixa = "Baixa",
+  Media = "Media",
+  Alta = "Alta",
+}
 
 export type Permission =
   | 0 // None
@@ -52,6 +57,7 @@ export interface DemandListItem {
   requester?: { id: string; name: string; email: string } | null;
   responsible?: string | null;
   classification: Classification;
+  priority?: Priority | null;
   status: DemandStatus;
   nextActionResponsible?: string | null;
   estimatedDelivery?: string | null;
@@ -66,6 +72,7 @@ export interface DemandDetail {
   observation?: string | null;
   occurrenceType: OccurrenceType;
   classification: Classification;
+  priority?: Priority | null;
   status: DemandStatus;
   system?: { id: string; name: string } | null;
   module?: { id: string; name: string; systemId: string } | null;

@@ -27,3 +27,4 @@ public enum Permission : long
 
 public enum OccurrenceType { Incremental = 1, Melhoria = 2, Bug = 3 }
 public enum Classification { Urgente = 1, Medio = 2, Baixo = 3 }
+public enum Priority { Baixa = 1, Media = 2, Alta = 3 }

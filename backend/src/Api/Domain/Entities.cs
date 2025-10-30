@@ -42,6 +42,7 @@ public class Demand
     public Guid UnitId { get; set; }
     public Unit Unit { get; set; } = default!;
     public Classification Classification { get; set; }
+    public Priority? Priority { get; set; }
 
     [MaxLength(120)] public string? Responsible { get; set; }
     public Guid? SystemVersionId { get; set; }

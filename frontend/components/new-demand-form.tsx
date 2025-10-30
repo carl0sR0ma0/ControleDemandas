@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { getSystems, getModules, getVersions, getAreas, getUnits } from "@/lib/api/configs";
 import { createDemand } from "@/lib/api/demands";
-import { Classification, OccurrenceType } from "@/types/api";
+import { Classification, OccurrenceType, Priority } from "@/types/api";
 import { getCurrentUser } from "@/hooks/useAuth";
 
 export function NewDemandForm() {
@@ -43,6 +43,7 @@ export function NewDemandForm() {
     systemVersionId: "",
     unitId: "",
     classification: "",
+    priority: "",
     responsible: "",
     requesterUserId: "",
     documentUrl: "",
@@ -98,6 +99,7 @@ export function NewDemandForm() {
         occurrenceType: (Number(formData.occurrenceType) || OccurrenceType.Incremental) as OccurrenceType,
         unitId: formData.unitId,
         classification: (Number(formData.classification) || Classification.Baixo) as Classification,
+        priority: (Number(formData.priority) || Priority.Media) as Priority,
         systemVersionId: formData.systemVersionId || undefined,
         documentUrl: formData.documentUrl || undefined,
         reporterEmail: undefined,
@@ -410,6 +412,40 @@ export function NewDemandForm() {
                     Solicitacoes de melhoria ou ajustes
                   </TooltipContent>
                 </Tooltip>
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Prioridade */}
+        <div className="space-y-2 col-span-12">
+          <Label htmlFor="priority" className="text-slate-700">
+            Prioridade <span className="text-red-500">*</span>
+          </Label>
+          <RadioGroup
+            value={formData.priority}
+            onValueChange={(value) =>
+              handleInputChange("priority", value)
+            }
+            required
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          >
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value={String(Priority.Baixa)} id="prioridade-baixa" />
+              <Label htmlFor="prioridade-baixa" className="flex items-center gap-1">
+                <Badge variant="secondary" className="bg-slate-400">Baixa (1)</Badge>
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value={String(Priority.Media)} id="prioridade-media" />
+              <Label htmlFor="prioridade-media" className="flex items-center gap-1">
+                <Badge className="bg-blue-500">Média (2)</Badge>
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value={String(Priority.Alta)} id="prioridade-alta" />
+              <Label htmlFor="prioridade-alta" className="flex items-center gap-1">
+                <Badge variant="destructive">Alta (3)</Badge>
               </Label>
             </div>
           </RadioGroup>

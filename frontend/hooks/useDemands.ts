@@ -15,6 +15,7 @@ import type {
   DemandStatus,
   OccurrenceType,
   Classification,
+  Priority,
 } from "../types/api";
 import { queryClient } from "../lib/queryClient";
 
@@ -77,6 +78,7 @@ export interface CreateDemandDto {
   occurrenceType: OccurrenceType;
   unitId: string;
   classification: Classification;
+  priority?: Priority;
   responsible?: string;
   systemVersionId?: string;
   documentUrl?: string;
@@ -103,6 +105,7 @@ export interface UpdateDemandDto {
   occurrenceType?: OccurrenceType;
   unitId?: string;
   classification?: Classification;
+  priority?: Priority;
   responsible?: string;
   systemVersionId?: string;
   nextActionResponsible?: string;

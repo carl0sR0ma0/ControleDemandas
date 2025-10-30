@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import type { DemandListItem, DemandDetail, DemandStatus, OccurrenceType, Classification } from "@/types/api";
+import type { DemandListItem, DemandDetail, DemandStatus, OccurrenceType, Classification, Priority } from "@/types/api";
 
 export interface DemandListResponse {
   total: number;
@@ -47,6 +47,7 @@ export async function listDemands(filters: DemandListFilters) {
     requester: x.requester ?? null,
     responsible: x.responsible ?? null,
     classification: x.classification,
+    priority: x.priority ?? null,
     status: x.status,
     nextActionResponsible: x.nextActionResponsible ?? null,
     estimatedDelivery: x.estimatedDelivery ?? null,
@@ -74,6 +75,7 @@ export interface CreateDemandDto {
   occurrenceType: OccurrenceType;
   unitId: string;
   classification: Classification;
+  priority?: Priority;
   responsible?: string;
   systemVersionId?: string;
   documentUrl?: string;
@@ -86,7 +88,16 @@ export async function createDemand(payload: CreateDemandDto) {
 }
 
 export interface UpdateDemandDto {
+  description?: string;
   observation?: string;
+  moduleId?: string;
+  reporterAreaId?: string;
+  occurrenceType?: OccurrenceType;
+  unitId?: string;
+  classification?: Classification;
+  priority?: Priority;
+  responsible?: string;
+  systemVersionId?: string;
   nextActionResponsible?: string;
   estimatedDelivery?: string;
   documentUrl?: string;

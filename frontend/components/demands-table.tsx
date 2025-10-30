@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDemandList } from "@/hooks/useDemands";
-import { OccurrenceType, Classification, DemandStatus, DemandListItem } from "@/types/api";
+import { OccurrenceType, Classification, DemandStatus, Priority, DemandListItem } from "@/types/api";
 
 export function DemandsTable() {
   const router = useRouter();
@@ -53,6 +53,34 @@ export function DemandsTable() {
         return "bg-gray-500 text-white";
       default:
         return "bg-gray-500 text-white";
+    }
+  };
+
+  const getPriorityColor = (priority?: Priority | null) => {
+    if (!priority) return "bg-gray-500 text-white";
+    switch (priority) {
+      case Priority.Alta:
+        return "bg-red-500 text-white";
+      case Priority.Media:
+        return "bg-blue-500 text-white";
+      case Priority.Baixa:
+        return "bg-slate-400 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
+  const getPriorityLabel = (priority?: Priority | null) => {
+    if (!priority) return "—";
+    switch (priority) {
+      case Priority.Alta:
+        return "Alta (3)";
+      case Priority.Media:
+        return "Média (2)";
+      case Priority.Baixa:
+        return "Baixa (1)";
+      default:
+        return String(priority);
     }
   };
 
@@ -243,6 +271,9 @@ export function DemandsTable() {
         case "classification":
           itemValue = item.classification;
           break;
+        case "priority":
+          itemValue = getPriorityLabel(item.priority);
+          break;
         case "status":
           itemValue = getStatusLabel(item.status);
           break;
@@ -345,6 +376,14 @@ export function DemandsTable() {
                 </th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   <div className="flex items-center gap-2">
+                    Prioridade
+                    {!isLoading && items.length > 0 && (
+                      <FilterPopover column="priority" title="Prioridade" dataKey="priority" />
+                    )}
+                  </div>
+                </th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
+                  <div className="flex items-center gap-2">
                     Status
                     {!isLoading && items.length > 0 && (
                       <FilterPopover column="status" title="Status" dataKey="status" />
@@ -356,11 +395,11 @@ export function DemandsTable() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={11}>Carregando...</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={12}>Carregando...</td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td className="py-6 text-center text-slate-500" colSpan={11}>Nenhuma demanda encontrada.</td>
+                  <td className="py-6 text-center text-slate-500" colSpan={12}>Nenhuma demanda encontrada.</td>
                 </tr>
               ) : (
                 filteredItems.map((d: DemandListItem) => (
@@ -409,6 +448,11 @@ export function DemandsTable() {
                     <td className="py-3 px-2">
                       <Badge className={getClassificationColor(d.classification)}>
                         {String(d.classification)}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-2">
+                      <Badge className={getPriorityColor(d.priority)}>
+                        {getPriorityLabel(d.priority)}
                       </Badge>
                     </td>
                     <td className="py-3 px-2">
