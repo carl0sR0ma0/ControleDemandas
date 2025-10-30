@@ -275,7 +275,7 @@ public static class DemandEndpoints
             return Results.Ok(saved);
         });
 
-        g.MapPut("/{id:guid}", async (Guid id, AppDbContext db, UpdateDemandDto dto, ILogger<Program> logger) =>
+        g.MapPut("/{id:guid}", [Authorize(Policy = "PERM:" + nameof(Permission.EditarDemanda))] async (Guid id, AppDbContext db, UpdateDemandDto dto, ILogger<Program> logger) =>
         {
             try
             {

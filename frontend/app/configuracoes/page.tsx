@@ -35,7 +35,7 @@ type NewOptionInputs = {
 };
 
 export default function ConfiguracoesPage() {
-  useAuthGuard(PERMS.GerenciarUsuarios); // exige permissão de gerenciar usuários (ajuste se quiser)
+  useAuthGuard(PERMS.Configuracoes); // exige permissão de configurações
 
   const [user, setUser] = useState<any>(null);
 

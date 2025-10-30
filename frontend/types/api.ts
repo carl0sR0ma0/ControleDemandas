@@ -31,8 +31,11 @@ export type Permission =
   | 2 // VisualizarDemandas
   | 4 // RegistrarDemandas
   | 8 // EditarStatus
-  | 16 // Aprovar
-  | 32; // GerenciarUsuarios
+  | 16 // EditarDemanda
+  | 32 // NotificarEmail
+  | 64 // GerenciarUsuarios
+  | 128 // GerenciarPerfis
+  | 256; // Configuracoes
 // … lembre: isso é bitmask; o backend retorna um número somado (long)
 
 // Usuário (resumo retornado pelo /auth/login)

@@ -88,10 +88,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var pDash = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Code = nameof(Permission.AcessarDashboard), Name = "Acessar Dashboard", Category = "Dashboard", Description = "Acesso ao painel principal" };
         var pView = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111112"), Code = nameof(Permission.VisualizarDemandas), Name = "Visualizar Demandas", Category = "Demandas", Description = "Ver lista e detalhes das demandas" };
         var pCreate = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111113"), Code = nameof(Permission.RegistrarDemandas), Name = "Registrar Demandas", Category = "Demandas", Description = "Criar novas demandas" };
-        var pEdit = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111114"), Code = nameof(Permission.EditarStatus), Name = "Editar Status", Category = "Demandas", Description = "Alterar status/histórico" };
-        var pApprove = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111115"), Code = nameof(Permission.Aprovar), Name = "Aprovar Demandas", Category = "Demandas", Description = "Aprovar para execução" };
-        var pUsers = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111116"), Code = nameof(Permission.GerenciarUsuarios), Name = "Gerenciar Usuários", Category = "Sistema", Description = "Criar/editar usuários" };
-        b.Entity<PermissionEntity>().HasData(pDash, pView, pCreate, pEdit, pApprove, pUsers);
+        var pEditStatus = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111114"), Code = nameof(Permission.EditarStatus), Name = "Editar Status", Category = "Demandas", Description = "Alterar status/histórico" };
+        var pEditDemand = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111115"), Code = nameof(Permission.EditarDemanda), Name = "Editar Demanda", Category = "Demandas", Description = "Editar informações das demandas" };
+        var pNotify = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111116"), Code = nameof(Permission.NotificarEmail), Name = "Notificar Email", Category = "Notificações", Description = "Enviar notificações por email" };
+        var pUsers = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111117"), Code = nameof(Permission.GerenciarUsuarios), Name = "Gerenciar Usuários", Category = "Sistema", Description = "Criar/editar usuários" };
+        var pProfiles = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111118"), Code = nameof(Permission.GerenciarPerfis), Name = "Gerenciar Perfis", Category = "Sistema", Description = "Criar/editar perfis" };
+        var pConfig = new PermissionEntity { Id = Guid.Parse("11111111-1111-1111-1111-111111111119"), Code = nameof(Permission.Configuracoes), Name = "Configurações", Category = "Sistema", Description = "Acessar configurações" };
+        b.Entity<PermissionEntity>().HasData(pDash, pView, pCreate, pEditStatus, pEditDemand, pNotify, pUsers, pProfiles, pConfig);
 
         // Seed Users
         var adminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -123,18 +126,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // Seed UserPermissions
         b.Entity<UserPermission>().HasData(
+            // Admin tem todas as permissões
             new UserPermission { UserId = adminId, PermissionId = pDash.Id, Granted = true },
             new UserPermission { UserId = adminId, PermissionId = pView.Id, Granted = true },
             new UserPermission { UserId = adminId, PermissionId = pCreate.Id, Granted = true },
-            new UserPermission { UserId = adminId, PermissionId = pEdit.Id, Granted = true },
-            new UserPermission { UserId = adminId, PermissionId = pApprove.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pEditStatus.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pEditDemand.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pNotify.Id, Granted = true },
             new UserPermission { UserId = adminId, PermissionId = pUsers.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pProfiles.Id, Granted = true },
+            new UserPermission { UserId = adminId, PermissionId = pConfig.Id, Granted = true },
 
+            // Gestor tem permissões operacionais
             new UserPermission { UserId = gestorId, PermissionId = pDash.Id, Granted = true },
             new UserPermission { UserId = gestorId, PermissionId = pView.Id, Granted = true },
             new UserPermission { UserId = gestorId, PermissionId = pCreate.Id, Granted = true },
-            new UserPermission { UserId = gestorId, PermissionId = pEdit.Id, Granted = true },
-            new UserPermission { UserId = gestorId, PermissionId = pApprove.Id, Granted = true }
+            new UserPermission { UserId = gestorId, PermissionId = pEditStatus.Id, Granted = true },
+            new UserPermission { UserId = gestorId, PermissionId = pEditDemand.Id, Granted = true },
+            new UserPermission { UserId = gestorId, PermissionId = pNotify.Id, Granted = true }
         );
     }
 }

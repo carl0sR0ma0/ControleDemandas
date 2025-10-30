@@ -32,8 +32,11 @@ const PERMS = {
   VisualizarDemandas: 2,
   RegistrarDemandas: 4,
   EditarStatus: 8,
-  Aprovar: 16,
-  GerenciarUsuarios: 32,
+  EditarDemanda: 16,
+  NotificarEmail: 32,
+  GerenciarUsuarios: 64,
+  GerenciarPerfis: 128,
+  Configuracoes: 256,
 };
 
 export function Sidebar() {
@@ -75,8 +78,8 @@ export function Sidebar() {
     ...(hasPermission(PERMS.RegistrarDemandas) ? [{ icon: Plus, label: "Nova Demanda", href: "/demandas/nova" }] : []),
     { icon: Search, label: "Consultar Protocolo", href: "/consultar" },
     ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
-    ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Shield, label: "Perfis", href: "/perfis" }] : []),
-    ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Settings, label: "Configurações", href: "/configuracoes" }] : []),
+    ...(hasPermission(PERMS.GerenciarPerfis) ? [{ icon: Shield, label: "Perfis", href: "/perfis" }] : []),
+    ...(hasPermission(PERMS.Configuracoes) ? [{ icon: Settings, label: "Configurações", href: "/configuracoes" }] : []),
   ];
 
   return (

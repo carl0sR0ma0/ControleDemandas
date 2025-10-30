@@ -9,7 +9,7 @@ public static class ProfileEndpoints
 {
     public static IEndpointRouteBuilder MapProfileEndpoints(this IEndpointRouteBuilder app)
     {
-        var g = app.MapGroup("/profiles").RequireAuthorization("PERM:" + nameof(Permission.GerenciarUsuarios));
+        var g = app.MapGroup("/profiles").RequireAuthorization("PERM:" + nameof(Permission.GerenciarPerfis));
 
         g.MapGet("/", async (AppDbContext db) =>
         {

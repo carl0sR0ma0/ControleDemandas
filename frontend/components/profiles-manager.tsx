@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { Shield, Users } from "lucide-react"
+import { Shield, Users, Eye, Edit, Settings } from "lucide-react"
 import { getProfiles, createProfile, updateProfile, setProfilePermissions, deleteProfile, type ProfileVm } from "@/lib/api/profiles"
 import { getCatalog, type CatalogItem } from "@/lib/api/permissions"
 
@@ -183,7 +183,12 @@ export function ProfilesManager() {
                 </div>
                 {Object.entries(grouped).map(([category, items]) => (
                   <div key={category}>
-                    <h3 className="font-semibold text-slate-900 mb-3">{category}</h3>
+                    <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                      {category === "Dashboard" && <Eye className="h-4 w-4" />}
+                      {category === "Demandas" && <Edit className="h-4 w-4" />}
+                      {category === "Sistema" && <Settings className="h-4 w-4" />}
+                      {category}
+                    </h3>
                     <div className="space-y-3">
                       {items.map((p) => (
                         <div key={p.code} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
@@ -198,7 +203,7 @@ export function ProfilesManager() {
                         </div>
                       ))}
                     </div>
-                    <Separator className="mt-4" />
+                    {category !== "Sistema" && <Separator className="mt-4" />}
                   </div>
                 ))}
               </CardContent>

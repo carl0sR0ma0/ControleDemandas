@@ -20,9 +20,11 @@ public enum Permission : long
     VisualizarDemandas    = 1 << 1,  // 2
     RegistrarDemandas     = 1 << 2,  // 4
     EditarStatus          = 1 << 3,  // 8
-    Aprovar               = 1 << 4,  // 16
-    GerenciarUsuarios     = 1 << 5,  // 32
-    EditarDemanda         = 1 << 6   // 64
+    EditarDemanda         = 1 << 4,  // 16
+    NotificarEmail        = 1 << 5,  // 32
+    GerenciarUsuarios     = 1 << 6,  // 64
+    GerenciarPerfis       = 1 << 7,  // 128
+    Configuracoes         = 1 << 8   // 256
 }
 
 public enum OccurrenceType { Incremental = 1, Melhoria = 2, Bug = 3 }

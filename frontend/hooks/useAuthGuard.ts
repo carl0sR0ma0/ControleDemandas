@@ -8,9 +8,11 @@ export const PERMS = {
   VisualizarDemandas: 2,     // bit 1 (2^1)
   RegistrarDemandas: 4,      // bit 2 (2^2)
   EditarStatus: 8,           // bit 3 (2^3)
-  Aprovar: 16,               // bit 4 (2^4)
-  GerenciarUsuarios: 32,     // bit 5 (2^5)
-  EditarDemanda: 64,         // bit 6 (2^6)
+  EditarDemanda: 16,         // bit 4 (2^4)
+  NotificarEmail: 32,        // bit 5 (2^5)
+  GerenciarUsuarios: 64,     // bit 6 (2^6)
+  GerenciarPerfis: 128,      // bit 7 (2^7)
+  Configuracoes: 256,        // bit 8 (2^8)
 };
 
 /**
