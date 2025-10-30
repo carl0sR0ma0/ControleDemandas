@@ -135,37 +135,38 @@ builder.Services.AddValidatorsFromAssemblyContaining<Api.Features.Auth.LoginDtoV
 
 var app = builder.Build();
 
-// Aplicar migrations automaticamente na inicialização
-try
+// Aplicar migrations automaticamente (controlado por configuração/ambiente)
+var applyMigrations = app.Configuration.GetValue("Database:ApplyMigrationsOnStartup", app.Environment.IsDevelopment());
+if (applyMigrations)
 {
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    Log.Information("Verificando estado do banco de dados...");
-
-    // Verifica se há migrations pendentes
-    var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
-    if (pendingMigrations.Any())
+    try
     {
-        Log.Information("Encontradas {Count} migration(s) pendente(s): {Migrations}",
-            pendingMigrations.Count,
-            string.Join(", ", pendingMigrations));
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Aplica automaticamente as migrations pendentes
-        // Se o banco não existir, ele será criado automaticamente
-        dbContext.Database.Migrate();
+        Log.Information("Verificando estado do banco de dados...");
 
-        Log.Information("Todas as migrations foram aplicadas com sucesso!");
+        var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+        if (pendingMigrations.Any())
+        {
+            Log.Information("Encontradas {Count} migration(s) pendente(s): {Migrations}",
+                pendingMigrations.Count,
+                string.Join(", ", pendingMigrations));
+
+            dbContext.Database.Migrate();
+
+            Log.Information("Todas as migrations foram aplicadas com sucesso!");
+        }
+        else
+        {
+            Log.Information("Banco de dados está atualizado. Nenhuma migration pendente.");
+        }
     }
-    else
+    catch (Exception ex)
     {
-        Log.Information("Banco de dados está atualizado. Nenhuma migration pendente.");
+        Log.Error(ex, "Erro ao aplicar migrations do banco de dados. A aplicação continuará, mas pode haver problemas.");
+        // Não interrompe a aplicação, apenas loga o erro
     }
-}
-catch (Exception ex)
-{
-    Log.Error(ex, "Erro ao aplicar migrations do banco de dados. A aplicação continuará, mas pode haver problemas.");
-    // Não interrompe a aplicação, apenas loga o erro
 }
 
 app.UseSerilogRequestLogging();
@@ -192,8 +193,16 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = ""
 });
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Swagger em desenvolvimento (ou se habilitado por configuração)
+var enableSwagger = app.Environment.IsDevelopment() || app.Configuration.GetValue("Swagger:Enabled", false);
+if (enableSwagger)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    // Redireciona raiz para o Swagger quando disponível
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+}
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapHealthChecks("/healthz");

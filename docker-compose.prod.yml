@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/src/Api/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:5000"
+      Swagger__Enabled: "true"
+      Database__ApplyMigrationsOnStartup: "true"
+      # Preencher via arquivo .env.prod ou diretamente no ambiente
+      ConnectionStrings__postgres: "${POSTGRES_URL}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      Init__Token: "${INIT_TOKEN}"
+      # URL pública do frontend (ex.: https://seuapp.vercel.app)
+      Cors__Origins__0: "${FRONTEND_URL}"
+    volumes:
+      - ./storage:/app/storage
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+

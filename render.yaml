@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: controle-demandas-api
+    env: docker
+    plan: free
+    autoDeploy: true
+    dockerfilePath: backend/src/Api/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:5000
+      - key: ConnectionStrings__postgres
+        sync: false
+      - key: Jwt__SigningKey
+        sync: false
+      - key: Init__Token
+        sync: false
+      - key: Swagger__Enabled
+        value: "true"
+      - key: Database__ApplyMigrationsOnStartup
+        value: "true"
+      - key: Cors__Origins__0
+        sync: false
