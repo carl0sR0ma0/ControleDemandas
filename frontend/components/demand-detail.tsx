@@ -8,9 +8,10 @@ import { StatusHistoryTable } from "@/components/status-history-table"
 import { StatusUpdateCard } from "@/components/status-update-card"
 import { Edit, Mail, Download, ArrowLeft } from "lucide-react"
 import { EditDemandForm } from "@/components/edit-demand-form"
+import { NotifyDemandDialog } from "@/components/notify-demand-dialog"
 import Link from "next/link"
 import { useState } from "react"
-import { useDemandDetailByProtocol } from "@/hooks/useDemands"
+import { useDemandDetailByProtocol, useNotifyDemand } from "@/hooks/useDemands"
 import { OccurrenceType, Classification, DemandStatus } from "@/types/api"
 import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
 
@@ -20,8 +21,11 @@ interface DemandDetailProps {
 
 export function DemandDetail({ protocol }: DemandDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false)
   const { data: demand, isLoading, error } = useDemandDetailByProtocol(protocol)
   const canEdit = useHasPermission(PERMS.EditarDemanda)
+  const canNotify = useHasPermission(PERMS.NotificarEmail)
+  const notifyMutation = useNotifyDemand(demand?.id || "")
 
   const getStatusColor = (status: DemandStatus) => {
     switch (status) {
@@ -118,6 +122,21 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
     setIsEditing(true)
   }
 
+  const handleNotifyClick = () => {
+    setIsNotifyDialogOpen(true)
+  }
+
+  const handleNotifyConfirm = async (data: {
+    includeReporter: boolean;
+    includeRequester: boolean;
+    includeResponsible: boolean;
+    additionalEmails?: string[];
+    message?: string;
+  }) => {
+    await notifyMutation.mutateAsync(data)
+    setIsNotifyDialogOpen(false)
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -166,8 +185,8 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
               Editar
             </Button>
           )}
-          {canEdit && (
-            <Button variant="outline">
+          {canNotify && (
+            <Button variant="outline" onClick={handleNotifyClick}>
               <Mail className="h-4 w-4 mr-2" />
               Notificar
             </Button>
@@ -361,6 +380,16 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
 
       {/* Status History */}
       <StatusHistoryTable history={demand.history || []} />
+
+      {/* Notify Dialog */}
+      <NotifyDemandDialog
+        open={isNotifyDialogOpen}
+        onOpenChange={setIsNotifyDialogOpen}
+        onConfirm={handleNotifyConfirm}
+        isLoading={notifyMutation.isPending}
+        requesterName={demand.requester && typeof demand.requester === 'object' ? demand.requester.name : undefined}
+        responsibleName={typeof demand.responsible === 'string' ? demand.responsible : undefined}
+      />
     </div>
   )
 }

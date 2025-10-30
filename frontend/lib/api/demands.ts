@@ -144,3 +144,16 @@ export async function getPublicDemandByProtocol(protocol: string) {
   return data;
 }
 
+export interface NotifyDemandDto {
+  includeReporter: boolean;
+  includeRequester: boolean;
+  includeResponsible: boolean;
+  additionalEmails?: string[];
+  message?: string;
+}
+
+export async function notifyDemand(id: string, payload: NotifyDemandDto) {
+  const { data } = await http.post<{ sentTo: string[]; protocol: string }>(`/demands/${id}/notify`, payload);
+  return data;
+}
+

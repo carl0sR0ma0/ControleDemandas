@@ -198,7 +198,7 @@ public static class DemandEndpoints
         });
 
         g.MapPost("/", [Authorize(Policy = "PERM:" + nameof(Permission.RegistrarDemandas))] async (
-            AppDbContext db, ProtocolService proto, EmailService mail, CreateDemandDto dto, ClaimsPrincipal user) =>
+            AppDbContext db, ProtocolService proto, DemandNotificationService notificationService, CreateDemandDto dto, ClaimsPrincipal user) =>
         {
             var protocol = await proto.GenerateAsync();
 
@@ -245,13 +245,14 @@ public static class DemandEndpoints
                 Note = "Abertura da demanda"
             });
 
+            // Definir RequesterUser para notificação
+            d.RequesterUser = requester;
+
             db.Demands.Add(d);
             await db.SaveChangesAsync();
 
-            if (!string.IsNullOrWhiteSpace(dto.ReporterEmail))
-                await mail.SendAsync(dto.ReporterEmail!,
-                    $"[Protocolo {d.Protocol}] Solicitação recebida",
-                    $"<p>Sua solicitação foi registrada com protocolo <b>{d.Protocol}</b>.</p>");
+            // Enviar notificação usando o novo serviço
+            await notificationService.SendCreationAsync(d, dto.ReporterEmail);
 
             return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
         })
@@ -363,19 +364,23 @@ public static class DemandEndpoints
         .AddEndpointFilter(new ValidationFilter<UpdateDemandDto>());
 
         g.MapPost("/{id:guid}/status", [Authorize(Policy = "PERM:" + nameof(Permission.EditarStatus))] async (
-            Guid id, AppDbContext db, ChangeStatusDto dto, ClaimsPrincipal user, ILogger<Program> logger) =>
+            Guid id, AppDbContext db, DemandNotificationService notificationService, ChangeStatusDto dto, ClaimsPrincipal user, ILogger<Program> logger) =>
         {
             try
             {
                 logger.LogInformation("Changing status for demand {Id} to {Status}", id, dto.NewStatus);
 
-                var d = await db.Demands.Include(x => x.History).SingleOrDefaultAsync(x => x.Id == id);
+                var d = await db.Demands
+                    .Include(x => x.History)
+                    .Include(x => x.RequesterUser)
+                    .SingleOrDefaultAsync(x => x.Id == id);
                 if (d is null)
                 {
                     logger.LogWarning("Demand {Id} not found", id);
                     return Results.NotFound();
                 }
 
+                var oldStatus = d.Status;
                 d.Status = dto.NewStatus;
 
                 var history = new StatusHistory
@@ -390,6 +395,10 @@ public static class DemandEndpoints
                 db.StatusHistory.Add(history);
                 await db.SaveChangesAsync();
                 logger.LogInformation("Status changed successfully for demand {Id}", id);
+
+                // Enviar notificação de mudança de status
+                await notificationService.SendStatusChangeAsync(d, oldStatus, dto.NewStatus, dto.Note, dto.ResponsibleUser);
+
                 return Results.Ok(new { d.Id, d.Status });
             }
             catch (Exception ex)
@@ -437,6 +446,46 @@ public static class DemandEndpoints
             }
         })
         .AddEndpointFilter(new ValidationFilter<UpdatePriorityDemandDto>());
+
+        // POST /demands/{id}/notify - Notificar manualmente
+        g.MapPost("/{id:guid}/notify", [Authorize(Policy = "PERM:" + nameof(Permission.NotificarEmail))] async (
+            Guid id, AppDbContext db, DemandNotificationService notificationService, ManualNotificationRequest request, ILogger<Program> logger) =>
+        {
+            try
+            {
+                var demand = await db.Demands
+                    .Include(x => x.RequesterUser)
+                    .Include(x => x.Module)
+                        .ThenInclude(m => m.System)
+                    .SingleOrDefaultAsync(x => x.Id == id);
+
+                if (demand is null)
+                {
+                    logger.LogWarning("Demand {Id} not found for notification", id);
+                    return Results.NotFound();
+                }
+
+                var sentTo = await notificationService.SendManualAsync(demand, request);
+
+                if (sentTo.Count == 0)
+                {
+                    return Results.BadRequest(new { error = "no_recipients_found", message = "Nenhum destinatário válido encontrado para enviar a notificação." });
+                }
+
+                logger.LogInformation("Manual notification sent for demand {Protocol} to {Count} recipients", demand.Protocol, sentTo.Count);
+
+                return Results.Accepted(value: new { sentTo = sentTo.ToArray(), protocol = demand.Protocol });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error sending notification for demand {Id}", id);
+                return Results.Problem(
+                    title: "Error sending notification",
+                    detail: ex.Message,
+                    statusCode: 500
+                );
+            }
+        });
 
         return app;
     }

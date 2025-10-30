@@ -74,6 +74,7 @@ builder.Services.AddScoped<ProtocolService>();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<DemandNotificationService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

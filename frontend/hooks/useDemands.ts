@@ -7,7 +7,9 @@ import {
   updateDemand,
   changeDemandStatus,
   uploadAttachments,
+  notifyDemand,
   type DemandListResponse,
+  type NotifyDemandDto,
 } from "@/lib/api/demands";
 import type {
   DemandDetail,
@@ -17,6 +19,7 @@ import type {
   Classification,
 } from "../types/api";
 import { queryClient } from "../lib/queryClient";
+import { toast } from "sonner";
 
 export type { DemandListResponse };
 
@@ -150,6 +153,22 @@ export function useUploadAttachments(id: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
+    },
+  });
+}
+
+export function useNotifyDemand(id: string) {
+  return useMutation({
+    mutationFn: async (payload: NotifyDemandDto) => {
+      return await notifyDemand(id, payload);
+    },
+    onSuccess: (data) => {
+      toast.success(`Notificação enviada com sucesso para ${data.sentTo.length} destinatário(s)`);
+      queryClient.invalidateQueries({ queryKey: ["demands", "detail", id] });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Erro ao enviar notificação";
+      toast.error(message);
     },
   });
 }

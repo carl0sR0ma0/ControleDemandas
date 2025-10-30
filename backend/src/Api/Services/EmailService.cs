@@ -13,6 +13,8 @@ public class SmtpOptions
     public string? User { get; set; }
     public string? Password { get; set; }
     public string From { get; set; } = "no-reply@empresa.com";
+    public string? DisplayName { get; set; }
+    public bool UseStartTls { get; set; } = false;
 }
 
 public class EmailService(IOptions<SmtpOptions> opt, ILogger<EmailService> log)
@@ -23,6 +25,10 @@ public class EmailService(IOptions<SmtpOptions> opt, ILogger<EmailService> log)
     {
         try
         {
+            log.LogInformation("Tentando enviar e-mail para {To} com assunto '{Subject}'", to, subject);
+            log.LogInformation("Configuração SMTP: Host={Host}, Port={Port}, SSL={Ssl}, User={User}",
+                _opt.Host, _opt.Port, _opt.EnableSsl, _opt.User ?? "(not set)");
+
             using var client = new SmtpClient(_opt.Host, _opt.Port)
             {
                 EnableSsl = _opt.EnableSsl,
@@ -30,12 +36,24 @@ public class EmailService(IOptions<SmtpOptions> opt, ILogger<EmailService> log)
                     new NetworkCredential(_opt.User, _opt.Password)
             };
 
-            var msg = new MailMessage(_opt.From, to, subject, html) { IsBodyHtml = true };
+            var from = string.IsNullOrWhiteSpace(_opt.DisplayName)
+                ? new MailAddress(_opt.From)
+                : new MailAddress(_opt.From, _opt.DisplayName);
+
+            var msg = new MailMessage(from, new MailAddress(to))
+            {
+                Subject = subject,
+                Body = html,
+                IsBodyHtml = true
+            };
+
             await client.SendMailAsync(msg, ct);
+            log.LogInformation("E-mail enviado com sucesso para {To}", to);
         }
         catch (Exception ex)
         {
-            log.LogWarning(ex, "Falha ao enviar e-mail (dev).");
+            log.LogError(ex, "ERRO ao enviar e-mail para {To}. Host: {Host}, Port: {Port}, SSL: {Ssl}",
+                to, _opt.Host, _opt.Port, _opt.EnableSsl);
         }
     }
 }
