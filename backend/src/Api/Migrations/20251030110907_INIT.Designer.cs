@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251027145756_RemoveClientConfigAndRenameResponsible")]
-    partial class RemoveClientConfigAndRenameResponsible
+    [Migration("20251030110907_INIT")]
+    partial class INIT
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,10 +101,8 @@ namespace Api.Migrations
                     b.Property<DateTime?>("EstimatedDelivery")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Module")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("NextActionResponsible")
                         .HasMaxLength(120)
@@ -119,35 +117,19 @@ namespace Api.Migrations
                     b.Property<DateTime>("OpenedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("Order")
+                    b.Property<int?>("Priority")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Priority")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("ProductModule")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
 
                     b.Property<string>("Protocol")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.Property<string>("Reporter")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                    b.Property<Guid>("ReporterAreaId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("ReporterArea")
-                        .IsRequired()
-                        .HasMaxLength(60)
-                        .HasColumnType("character varying(60)");
-
-                    b.Property<string>("RequesterResponsible")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                    b.Property<Guid>("RequesterUserId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Responsible")
                         .HasMaxLength(120)
@@ -156,19 +138,26 @@ namespace Api.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("SystemVersion")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                    b.Property<Guid?>("SystemVersionId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("Unit")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
+                    b.Property<Guid>("UnitId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ModuleId");
+
                     b.HasIndex("Protocol")
                         .IsUnique();
+
+                    b.HasIndex("ReporterAreaId");
+
+                    b.HasIndex("RequesterUserId");
+
+                    b.HasIndex("SystemVersionId");
+
+                    b.HasIndex("UnitId");
 
                     b.ToTable("Demands");
                 });
@@ -275,18 +264,45 @@ namespace Api.Migrations
                             Id = new Guid("11111111-1111-1111-1111-111111111115"),
                             Active = true,
                             Category = "Demandas",
-                            Code = "Aprovar",
-                            Description = "Aprovar para execução",
-                            Name = "Aprovar Demandas"
+                            Code = "EditarDemanda",
+                            Description = "Editar informações das demandas",
+                            Name = "Editar Demanda"
                         },
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111116"),
                             Active = true,
+                            Category = "Notificações",
+                            Code = "NotificarEmail",
+                            Description = "Enviar notificações por email",
+                            Name = "Notificar Email"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111117"),
+                            Active = true,
                             Category = "Sistema",
                             Code = "GerenciarUsuarios",
                             Description = "Criar/editar usuários",
                             Name = "Gerenciar Usuários"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111118"),
+                            Active = true,
+                            Category = "Sistema",
+                            Code = "GerenciarPerfis",
+                            Description = "Criar/editar perfis",
+                            Name = "Gerenciar Perfis"
+                        },
+                        new
+                        {
+                            Id = new Guid("11111111-1111-1111-1111-111111111119"),
+                            Active = true,
+                            Category = "Sistema",
+                            Code = "Configuracoes",
+                            Description = "Acessar configurações",
+                            Name = "Configurações"
                         });
                 });
 
@@ -372,6 +388,10 @@ namespace Api.Migrations
 
                     b.Property<string>("Note")
                         .HasColumnType("text");
+
+                    b.Property<string>("ResponsibleUser")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -484,6 +504,10 @@ namespace Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<Guid?>("ProfileId")
                         .HasColumnType("uuid");
 
@@ -507,24 +531,22 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 14, 57, 56, 28, DateTimeKind.Utc).AddTicks(179),
+                            CreatedAt = new DateTime(2025, 10, 30, 11, 9, 6, 740, DateTimeKind.Utc).AddTicks(3197),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$1liel38STfM9vA2cYJN8D.0Q691818DVF51pO7vpXMdXDgSArc3Iq",
-                            ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            PasswordHash = "$2a$11$H1poKqpbtEKuXkcb/oNlXO7IlXDbrSvGhZrg/u8AI6HHNv.5HJx8a",
                             Role = "Admin"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 27, 14, 57, 56, 146, DateTimeKind.Utc).AddTicks(2886),
+                            CreatedAt = new DateTime(2025, 10, 30, 11, 9, 6, 981, DateTimeKind.Utc).AddTicks(652),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$aoZ/Yp04YRBbRY0lZcwcGepohAwBeb.nRLCc31HnhiV/RskTNQ0c2",
-                            ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            PasswordHash = "$2a$11$u4/tUTd6dB1TQtVRiYhqkePz0soeA2h2JhCtp/AIzUO4e25jrijVq",
                             Role = "Gestor"
                         });
                 });
@@ -585,6 +607,24 @@ namespace Api.Migrations
                         },
                         new
                         {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111117"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111118"),
+                            Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111119"),
+                            Granted = true
+                        },
+                        new
+                        {
                             UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             PermissionId = new Guid("11111111-1111-1111-1111-111111111111"),
                             Granted = true
@@ -612,6 +652,12 @@ namespace Api.Migrations
                             UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             PermissionId = new Guid("11111111-1111-1111-1111-111111111115"),
                             Granted = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            PermissionId = new Guid("11111111-1111-1111-1111-111111111116"),
+                            Granted = true
                         });
                 });
 
@@ -624,6 +670,48 @@ namespace Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Demand");
+                });
+
+            modelBuilder.Entity("Api.Domain.Demand", b =>
+                {
+                    b.HasOne("Api.Domain.ModuleEntity", "Module")
+                        .WithMany()
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Api.Domain.Area", "ReporterArea")
+                        .WithMany()
+                        .HasForeignKey("ReporterAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Api.Domain.User", "RequesterUser")
+                        .WithMany()
+                        .HasForeignKey("RequesterUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Api.Domain.SystemVersion", "SystemVersion")
+                        .WithMany()
+                        .HasForeignKey("SystemVersionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Api.Domain.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+
+                    b.Navigation("ReporterArea");
+
+                    b.Navigation("RequesterUser");
+
+                    b.Navigation("SystemVersion");
+
+                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("Api.Domain.ModuleEntity", b =>

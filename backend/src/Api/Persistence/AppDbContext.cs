@@ -99,8 +99,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // Seed Users
         var adminId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var gestorId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var adminProfileId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        var gestorProfileId = Guid.Parse("33333333-3333-3333-3333-333333333333");
         b.Entity<User>().HasData(
             new User
             {
@@ -109,7 +107,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Email = "admin@empresa.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                 Role = "Admin",
-                ProfileId = adminProfileId,
+                ProfileId = null,
                 IsSpecial = false
             },
             new User
@@ -119,7 +117,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 Email = "gestor@empresa.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Gestor@123"),
                 Role = "Gestor",
-                ProfileId = gestorProfileId,
+                ProfileId = null,
                 IsSpecial = false
             }
         );

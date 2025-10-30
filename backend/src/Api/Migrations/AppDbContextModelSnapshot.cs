@@ -528,24 +528,22 @@ namespace Api.Migrations
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 30, 0, 55, 19, 464, DateTimeKind.Utc).AddTicks(481),
+                            CreatedAt = new DateTime(2025, 10, 30, 11, 9, 6, 740, DateTimeKind.Utc).AddTicks(3197),
                             Email = "admin@empresa.com",
                             IsSpecial = false,
                             Name = "Administrador",
-                            PasswordHash = "$2a$11$deA5o5JTDYTyEHqSsYdFDO4UsphNyJpQcBc3HeZfxKdnfc3FMyc7a",
-                            ProfileId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            PasswordHash = "$2a$11$H1poKqpbtEKuXkcb/oNlXO7IlXDbrSvGhZrg/u8AI6HHNv.5HJx8a",
                             Role = "Admin"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             Active = true,
-                            CreatedAt = new DateTime(2025, 10, 30, 0, 55, 19, 880, DateTimeKind.Utc).AddTicks(8232),
+                            CreatedAt = new DateTime(2025, 10, 30, 11, 9, 6, 981, DateTimeKind.Utc).AddTicks(652),
                             Email = "gestor@empresa.com",
                             IsSpecial = false,
                             Name = "Gestor",
-                            PasswordHash = "$2a$11$FgEDoydnz2GClMRtbGmWr.iZ62rElMbyb0M2udIbaFiJtowTJbdya",
-                            ProfileId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            PasswordHash = "$2a$11$u4/tUTd6dB1TQtVRiYhqkePz0soeA2h2JhCtp/AIzUO4e25jrijVq",
                             Role = "Gestor"
                         });
                 });
