@@ -135,6 +135,39 @@ builder.Services.AddValidatorsFromAssemblyContaining<Api.Features.Auth.LoginDtoV
 
 var app = builder.Build();
 
+// Aplicar migrations automaticamente na inicialização
+try
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    Log.Information("Verificando estado do banco de dados...");
+
+    // Verifica se há migrations pendentes
+    var pendingMigrations = dbContext.Database.GetPendingMigrations().ToList();
+    if (pendingMigrations.Any())
+    {
+        Log.Information("Encontradas {Count} migration(s) pendente(s): {Migrations}",
+            pendingMigrations.Count,
+            string.Join(", ", pendingMigrations));
+
+        // Aplica automaticamente as migrations pendentes
+        // Se o banco não existir, ele será criado automaticamente
+        dbContext.Database.Migrate();
+
+        Log.Information("Todas as migrations foram aplicadas com sucesso!");
+    }
+    else
+    {
+        Log.Information("Banco de dados está atualizado. Nenhuma migration pendente.");
+    }
+}
+catch (Exception ex)
+{
+    Log.Error(ex, "Erro ao aplicar migrations do banco de dados. A aplicação continuará, mas pode haver problemas.");
+    // Não interrompe a aplicação, apenas loga o erro
+}
+
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
 app.UseCors("frontend");
