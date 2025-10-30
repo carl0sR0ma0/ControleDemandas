@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Api.Services;
 
 public class DemandNotificationService(
-    EmailService emailService,
+    IEmailQueueService emailQueue,
     ILogger<DemandNotificationService> logger,
     AppDbContext db)
 {
@@ -53,16 +53,16 @@ public class DemandNotificationService(
         var subject = $"[Protocolo {demand.Protocol}] Solicitação recebida";
         var body = BuildCreationEmailBody(demand);
 
-        logger.LogInformation("Enviando e-mail para {Count} destinatário(s): {Recipients}",
+        logger.LogInformation("Enfileirando e-mail para {Count} destinatário(s): {Recipients}",
             recipients.Count, string.Join(", ", recipients));
 
         foreach (var recipient in recipients)
         {
-            logger.LogInformation("Tentando enviar e-mail para: {Recipient}", recipient);
-            await emailService.SendAsync(recipient, subject, body, ct);
+            logger.LogInformation("Enfileirando e-mail para: {Recipient}", recipient);
+            await emailQueue.EnqueueAsync(recipient, subject, body, ct);
         }
 
-        logger.LogInformation("E-mail de criação enviado com sucesso para demanda {Protocol} - Destinatários: {Recipients}",
+        logger.LogInformation("E-mail de criação enfileirado com sucesso para demanda {Protocol} - Destinatários: {Recipients}",
             demand.Protocol, string.Join(", ", recipients));
     }
 
@@ -127,10 +127,10 @@ public class DemandNotificationService(
 
         foreach (var recipient in recipients)
         {
-            await emailService.SendAsync(recipient, subject, body, ct);
+            await emailQueue.EnqueueAsync(recipient, subject, body, ct);
         }
 
-        logger.LogInformation("Notificação manual enviada para demanda {Protocol} - Destinatários: {Recipients}",
+        logger.LogInformation("Notificação manual enfileirada para demanda {Protocol} - Destinatários: {Recipients}",
             demand.Protocol, string.Join(", ", recipients));
 
         return recipients;
@@ -198,16 +198,16 @@ public class DemandNotificationService(
         var subject = $"[Protocolo {demand.Protocol}] Status alterado para {newStatus}";
         var body = BuildStatusChangeEmailBody(demand, oldStatus, newStatus, note, responsibleUser);
 
-        logger.LogInformation("Enviando e-mail de mudança de status para {Count} destinatário(s): {Recipients}",
+        logger.LogInformation("Enfileirando e-mail de mudança de status para {Count} destinatário(s): {Recipients}",
             recipients.Count, string.Join(", ", recipients));
 
         foreach (var recipient in recipients)
         {
-            logger.LogInformation("Enviando notificação de mudança de status para: {Recipient}", recipient);
-            await emailService.SendAsync(recipient, subject, body, ct);
+            logger.LogInformation("Enfileirando notificação de mudança de status para: {Recipient}", recipient);
+            await emailQueue.EnqueueAsync(recipient, subject, body, ct);
         }
 
-        logger.LogInformation("E-mail de mudança de status enviado com sucesso para demanda {Protocol} - Destinatários: {Recipients}",
+        logger.LogInformation("E-mail de mudança de status enfileirado com sucesso para demanda {Protocol} - Destinatários: {Recipients}",
             demand.Protocol, string.Join(", ", recipients));
     }
 

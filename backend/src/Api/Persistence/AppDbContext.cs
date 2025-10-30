@@ -26,7 +26,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         b.HasPostgresExtension("uuid-ossp");
         b.Entity<User>().HasIndex(x => x.Email).IsUnique();
 
+        // Índices de Demand
         b.Entity<Demand>().HasIndex(x => x.Protocol).IsUnique();
+
+        // Índices para otimizar queries de filtro e listagem
+        b.Entity<Demand>().HasIndex(x => x.Status);
+        b.Entity<Demand>().HasIndex(x => x.ReporterAreaId);
+        b.Entity<Demand>().HasIndex(x => x.ModuleId);
+        b.Entity<Demand>().HasIndex(x => x.UnitId);
+        b.Entity<Demand>().HasIndex(x => x.RequesterUserId);
+        b.Entity<Demand>().HasIndex(x => x.SystemVersionId);
+        b.Entity<Demand>().HasIndex(x => x.BacklogId);
+        b.Entity<Demand>().HasIndex(x => x.OpenedAt);
+
+        // Índices compostos para queries mais complexas (mais eficientes para ordenação + filtro)
+        b.Entity<Demand>().HasIndex(x => new { x.Status, x.OpenedAt });
+        b.Entity<Demand>().HasIndex(x => new { x.ReporterAreaId, x.OpenedAt });
+        b.Entity<Demand>().HasIndex(x => new { x.ModuleId, x.OpenedAt });
+
+        // Índices para campos de busca textual comum
+        b.Entity<Demand>().HasIndex(x => x.Responsible);
+        b.Entity<Demand>().HasIndex(x => x.OccurrenceType);
+        b.Entity<Demand>().HasIndex(x => x.Classification);
+        b.Entity<Demand>().HasIndex(x => x.Priority);
 
         b.Entity<Demand>().HasMany(d => d.Attachments).WithOne(a => a.Demand).HasForeignKey(a => a.DemandId);
         b.Entity<Demand>().HasMany(d => d.History).WithOne(h => h.Demand).HasForeignKey(h => h.DemandId);

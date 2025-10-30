@@ -41,9 +41,35 @@ builder.Services.AddCors(opts =>
         .AllowCredentials());
 });
 
-// DbContext
+// DbContext com configurações otimizadas de connection pool
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("postgres")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("postgres");
+    o.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        // Batch múltiplos comandos para reduzir round-trips ao banco
+        npgsqlOptions.MaxBatchSize(100);
+
+        // Timeout de comandos (30 segundos)
+        npgsqlOptions.CommandTimeout(30);
+
+        // Retry automático em caso de falhas transientes
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+
+        // Migrations assembly (caso use projeto separado no futuro)
+        npgsqlOptions.MigrationsAssembly("Api");
+    });
+
+    // Habilitar logging sensível de dados apenas em desenvolvimento
+    if (builder.Environment.IsDevelopment())
+    {
+        o.EnableSensitiveDataLogging();
+        o.EnableDetailedErrors();
+    }
+});
 
 // JWT
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -74,6 +100,14 @@ builder.Services.AddScoped<ProtocolService>();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 builder.Services.AddScoped<EmailService>();
+
+// Email Queue (Singleton para compartilhar a mesma fila)
+builder.Services.AddSingleton<EmailQueueService>();
+builder.Services.AddSingleton<IEmailQueueService>(sp => sp.GetRequiredService<EmailQueueService>());
+
+// Background Service para processar e-mails
+builder.Services.AddHostedService<Api.BackgroundServices.EmailBackgroundService>();
+
 builder.Services.AddScoped<DemandNotificationService>();
 
 builder.Services.AddEndpointsApiExplorer();
