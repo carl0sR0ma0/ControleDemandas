@@ -5,19 +5,24 @@ services:
     plan: free
     autoDeploy: true
     dockerfilePath: backend/src/Api/Dockerfile
+    buildContext: backend
     healthCheckPath: /health
     envVars:
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:5000
       - key: ConnectionStrings__postgres
+        value: postgres://neondb_owner:npg_FEanokWK9q0g@ep-fancy-base-ahvgvi55-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
         sync: false
       - key: Jwt__SigningKey
+        value: 4ZqRpa4XkQ6v2LRg7U5Y5hvzGm1NnBfxWZ8jHpl7Zq1m+L9xwMmvYxvWhKp7QqH4Rph7dUoA7V2uV1Irx1S8Hg==
         sync: false
       - key: Init__Token
+        value: c7b2c458-36e8-4f3a-8a91-bb29c4c9d2d7
         sync: false
       - key: Swagger__Enabled
         value: "true"
       - key: Database__ApplyMigrationsOnStartup
         value: "true"
       - key: Cors__Origins__0
+        value: "https://controle-demandas.vercel.app"
         sync: false
