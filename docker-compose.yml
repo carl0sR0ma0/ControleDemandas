@@ -1,4 +1,4 @@
-version: "3.9"
+﻿version: "3.9"
 
 services:
   # PostgreSQL Database
@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
       POSTGRES_DB: controle_demandas
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -31,12 +31,13 @@ services:
     restart: unless-stopped
     environment:
       # Database
-      ConnectionStrings__postgres: "Host=db;Port=5432;Database=controle_demandas;Username=postgres;Password=${DB_PASSWORD:-postgres};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;Connection Idle Lifetime=300;Connection Pruning Interval=10"
+      ConnectionStrings__postgres: >-
+        Host=db;Port=5432;Database=controle_demandas;Username=postgres;Password=${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;Connection Idle Lifetime=300;Connection Pruning Interval=10
 
       # JWT
       Jwt__Issuer: "controle-demandas"
       Jwt__Audience: "controle-demandas"
-      Jwt__SigningKey: "${JWT_SIGNING_KEY:-troque-por-uma-chave-bem-longa-e-secreta-em-producao}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?Defina JWT_SIGNING_KEY no arquivo .env}"
       Jwt__ExpHours: "8"
 
       # CORS
@@ -56,7 +57,7 @@ services:
       Serilog__MinimumLevel: "${LOG_LEVEL:-Information}"
 
       # Init Token
-      Init__Token: "${INIT_TOKEN:-troque-este-token-para-produção}"
+      Init__Token: "${INIT_TOKEN:?Defina INIT_TOKEN no arquivo .env}"
 
       # ASP.NET Core
       ASPNETCORE_ENVIRONMENT: "${ENVIRONMENT:-Production}"
@@ -103,7 +104,7 @@ services:
       retries: 3
       start_period: 15s
 
-  # PgAdmin (Opcional - remover em produção)
+  # PgAdmin (Opcional - remover em producao)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: controle-demandas-pgadmin

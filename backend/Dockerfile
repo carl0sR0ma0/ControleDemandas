@@ -24,6 +24,9 @@ WORKDIR /app
 # Criar diretórios para arquivos
 RUN mkdir -p /app/storage /app/wwwroot
 
+# Instalar dependências necessárias para health check
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Copiar arquivos publicados
 COPY --from=publish /app/publish .
 
