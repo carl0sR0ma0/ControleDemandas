@@ -8,12 +8,13 @@ on:
 
 jobs:
   deploy:
+    environment: Prodcution
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy
         env:
-          RENDER_SERVICE_ID: srv-d41vdna4d50c73fft5og
-          RENDER_API_KEY: rnd_b0efpcV8EJ8hdqdCoNERibirIMZG
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
           if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_API_KEY" ]; then
             echo "Render secrets not configured. Skipping Render deploy."
@@ -29,7 +30,7 @@ jobs:
 
       - name: Trigger Vercel deploy
         env:
-          VERCEL_DEPLOY_HOOK_URL: https://api.vercel.com/v1/integrations/deploy/prj_LUgiUDA2SoKxyxuPSZjnAyMUfYtP/7N4SVjD8rQ
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
           if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
             echo "Vercel deploy hook URL not configured. Skipping Vercel deploy."
