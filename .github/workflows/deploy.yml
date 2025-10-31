@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Trigger Render deploy
         env:
-          RENDER_SERVICE_ID: prj-d41vdn7gi27c739pnjc0
+          RENDER_SERVICE_ID: srv-d41vdna4d50c73fft5og
           RENDER_API_KEY: rnd_b0efpcV8EJ8hdqdCoNERibirIMZG
         run: |
           if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_API_KEY" ]; then
