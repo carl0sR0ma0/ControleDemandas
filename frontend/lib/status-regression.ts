@@ -2,9 +2,11 @@ import { DemandStatus, StatusHistory } from "@/types/api"
 
 /**
  * Define a ordem hierárquica dos status
+ * Nota: "Arquivado" está no mesmo nível de "Aberta" pois pode transicionar para/de Aberta
  */
 const STATUS_HIERARCHY: Record<DemandStatus, number> = {
   [DemandStatus.Aberta]: 0,
+  [DemandStatus.Arquivado]: 0, // Mesmo nível de Aberta (status lateral, não progressão)
   [DemandStatus.Ranqueado]: 1,
   [DemandStatus.Documentacao]: 2,
   [DemandStatus.Aprovacao]: 3,

@@ -48,7 +48,7 @@ function TooltipPortal({ children, targetRef, show }: TooltipPortalProps) {
 }
 
 export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
-  const statusOrder = [
+  const allStatusDefinitions = [
     { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
     { key: DemandStatus.Arquivado, name: "Arquivado", color: "#78909C" },
     { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#B0BEC5" },
@@ -67,6 +67,28 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
   const historyMap = new Map(
     history.map((h) => [h.status, h.date])
   )
+
+  // Ordenar histórico por data (mais antigo primeiro) para garantir ordem cronológica correta
+  const sortedHistory = [...history].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+
+  // Filtrar apenas os status que aparecem no histórico da demanda
+  // Mantém a ordem cronológica do histórico (primeira aparição de cada status)
+  const uniqueStatusOrder: string[] = []
+  const seen = new Set<string>()
+
+  for (const h of sortedHistory) {
+    if (!seen.has(h.status)) {
+      uniqueStatusOrder.push(h.status)
+      seen.add(h.status)
+    }
+  }
+
+  // Mapear para as definições completas mantendo a ordem cronológica
+  const statusOrder = uniqueStatusOrder
+    .map(status => allStatusDefinitions.find(def => def.key === status || def.name === status))
+    .filter((def): def is typeof allStatusDefinitions[0] => def !== undefined)
 
   const steps = statusOrder.map((s) => ({
     name: s.name,
