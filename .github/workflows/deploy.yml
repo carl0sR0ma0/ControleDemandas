@@ -20,10 +20,11 @@ jobs:
             exit 0
           fi
 
-          curl -fsS -X POST \
+          curl --fail-with-body -X POST \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json" \
             -H "Content-Type: application/json" \
-            -d '{"clearCache":false}' \
+            -d '{}' \
             "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys"
 
       - name: Trigger Vercel deploy
