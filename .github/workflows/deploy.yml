@@ -4,14 +4,22 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   deploy:
-    environment: Prodcution
+    environment: ${{ github.event_name == 'push' && 'Prodcution' || 'preview' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Skip deploy steps on pull requests
+        if: github.event_name == 'pull_request'
+        run: echo "Pull request detected. Real deploy steps are skipped; this run only satisfies required checks."
+
       - name: Trigger Render deploy
+        if: github.event_name == 'push'
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -29,6 +37,7 @@ jobs:
             "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys"
 
       - name: Trigger Vercel deploy
+        if: github.event_name == 'push'
         env:
           VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
