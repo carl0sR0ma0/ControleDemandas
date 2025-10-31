@@ -54,10 +54,9 @@ Consulte `DEPLOY.md` para um checklist completo de producao.
 - Secrets obrigatorios no repositorio:
   - `RENDER_API_KEY`: token de API gerado no painel da Render.
   - `RENDER_SERVICE_ID`: ID do servico configurado na Render (ver `render.yaml`).
-  - `VERCEL_DEPLOY_HOOK_URL`: URL de deploy hook gerada no projeto da Vercel.
 - O job dispara:
   1. POST para `https://api.render.com/v1/services/<serviceId>/deploys`, iniciando o deploy da API.
-  2. POST no hook da Vercel para publicar o frontend.
+- A Vercel permanece vinculada diretamente ao GitHub; qualquer push gera automaticamente o deploy e os previews.
 - Se algum secret faltar, o passo correspondente e ignorado e o job continua (logs indicam a configuracao ausente).
 
 ## Documentacao complementar

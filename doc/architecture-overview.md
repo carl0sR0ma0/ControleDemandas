@@ -53,7 +53,7 @@ Este documento serve como briefing rapido para agentes automatos (Codex, Claude,
   - JWT guardado em cookie (via API / storage local; conferir `lib/http.ts`).
 - **Build/Deploy**:
   - `Dockerfile` exporta build static + Node runtime.
-  - Deploy na Vercel consumindo hook configurado via secret.
+  - Deploy na Vercel via integraçao GitHub (deploys automáticos em push/pull request).
 
 ## Banco de Dados
 - PostgreSQL 16.
@@ -65,8 +65,9 @@ Este documento serve como briefing rapido para agentes automatos (Codex, Claude,
 
 ## Automatizacoes
 - **GitHub Actions**: `.github/workflows/deploy.yml`
-  - Ao push na `main`: chama Render (`RENDER_SERVICE_ID`, `RENDER_API_KEY`) e Vercel (`VERCEL_DEPLOY_HOOK_URL`).
-  - Job referencia environment `Prodcution` (com aprovacao manual se configurada).
+  - Ao push na `main`: dispara deploy da API na Render (`RENDER_SERVICE_ID`, `RENDER_API_KEY`).
+  - Pull requests executam apenas validação do check (sem deploy real).
+  - Job referencia environment `Production` (com aprovacao manual, se configurada); PRs utilizam `Preview`.
 - **Script de Backlog**: `scripts/migrate_next_tasks.py`
   - Lê `doc/backlog/NEXT_TASKS.md`, cria issues via API e adiciona ao Project "Controle de demandas".
   - Usa GraphQL Projects Next (`GraphQL-Features: projects_next_graphql`).
