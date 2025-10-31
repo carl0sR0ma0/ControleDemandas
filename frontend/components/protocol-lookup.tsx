@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { StatusStepper } from '@/components/status-stepper';
+import { StatusFlowDiagram } from '@/components/status-flow-diagram';
 import { Search, AlertCircle, CheckCircle } from 'lucide-react';
 import { getPublicDemandByProtocol } from '@/lib/api/demands';
 import { DemandStatus, OccurrenceType } from '@/types/api';
@@ -247,11 +248,16 @@ export function ProtocolLookup() {
 
           {/* Status Timeline */}
           <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>Andamento da Solicitação</CardTitle>
-              <CardDescription>
-                Acompanhe o progresso da sua demanda através das etapas
-              </CardDescription>
+            <CardHeader className="relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Andamento da Solicitação</CardTitle>
+                  <CardDescription>
+                    Acompanhe o progresso da sua demanda através das etapas
+                  </CardDescription>
+                </div>
+                <StatusFlowDiagram currentStatus={searchResult.status as DemandStatus} />
+              </div>
             </CardHeader>
             <CardContent>
               <StatusStepper
@@ -262,7 +268,9 @@ export function ProtocolLookup() {
                   date: step.date,
                   author: step.author,
                   note: step.note,
+                  responsibleUser: step.responsibleUser,
                 }))}
+                showNoteTooltips={true}
               />
             </CardContent>
           </Card>

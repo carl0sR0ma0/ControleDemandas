@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { StatusStepper } from "@/components/status-stepper"
 import { StatusHistoryTable } from "@/components/status-history-table"
 import { StatusUpdateCard } from "@/components/status-update-card"
+import { StatusFlowDiagram } from "@/components/status-flow-diagram"
 import { Edit, Mail, Download, ArrowLeft } from "lucide-react"
 import { EditDemandForm } from "@/components/edit-demand-form"
 import { NotifyDemandDialog } from "@/components/notify-demand-dialog"
@@ -353,9 +354,14 @@ export function DemandDetail({ protocol }: DemandDetailProps) {
 
       {/* Status Progress */}
       <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Andamento da Solicitação</CardTitle>
-          <CardDescription>Acompanhe o progresso da sua demanda</CardDescription>
+        <CardHeader className="relative">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Andamento da Solicitação</CardTitle>
+              <CardDescription>Acompanhe o progresso da sua demanda</CardDescription>
+            </div>
+            <StatusFlowDiagram currentStatus={demand.status} />
+          </div>
         </CardHeader>
         <CardContent>
           <StatusStepper

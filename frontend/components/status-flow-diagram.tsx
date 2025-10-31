@@ -4,22 +4,11 @@ import React, { useState, useEffect } from "react"
 import { Info, X } from "lucide-react"
 import { DemandStatus } from "@/types/api"
 import { createPortal } from "react-dom"
+import { STATUS_TRANSITIONS } from "@/lib/status-transitions"
 
 interface StatusFlowDiagramProps {
   className?: string
-}
-
-// Workflow completo do sistema
-const STATUS_TRANSITIONS: Record<DemandStatus, DemandStatus[]> = {
-  [DemandStatus.Aberta]: [DemandStatus.Arquivado, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Arquivado]: [DemandStatus.Ranqueado, DemandStatus.Aberta],
-  [DemandStatus.Ranqueado]: [DemandStatus.Aprovacao, DemandStatus.Arquivado, DemandStatus.Aberta, DemandStatus.Concluida],
-  [DemandStatus.Aprovacao]: [DemandStatus.Documentacao, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Documentacao]: [DemandStatus.Execucao, DemandStatus.Aprovacao, DemandStatus.Concluida],
-  [DemandStatus.Execucao]: [DemandStatus.Pausado, DemandStatus.Validacao, DemandStatus.Documentacao, DemandStatus.Concluida],
-  [DemandStatus.Pausado]: [DemandStatus.Execucao, DemandStatus.Validacao],
-  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Pausado, DemandStatus.Execucao],
-  [DemandStatus.Concluida]: [],
+  currentStatus?: DemandStatus
 }
 
 const STATUS_INFO = [
@@ -34,9 +23,10 @@ const STATUS_INFO = [
   { key: DemandStatus.Concluida, name: "Concluída", color: "#7CB342", description: "Finalizada e entregue" },
 ]
 
-export function StatusFlowDiagram({ className = "" }: StatusFlowDiagramProps) {
+export function StatusFlowDiagram({ className = "", currentStatus }: StatusFlowDiagramProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [hoveredStatus, setHoveredStatus] = useState<DemandStatus | null>(null)
+  const [tooltipStatus, setTooltipStatus] = useState<DemandStatus | null>(null)
 
   // Fechar modal com tecla ESC
   useEffect(() => {
@@ -63,76 +53,160 @@ export function StatusFlowDiagram({ className = "" }: StatusFlowDiagramProps) {
   }
 
   const renderFlowDiagram = () => {
+    // Organizar status em linhas para layout horizontal
+    const mainFlowStatuses = [
+      DemandStatus.Aberta,
+      DemandStatus.Ranqueado,
+      DemandStatus.Aprovacao,
+      DemandStatus.Documentacao,
+      DemandStatus.Execucao,
+      DemandStatus.Validacao,
+      DemandStatus.Concluida,
+    ]
+
+    const secondaryStatuses = [DemandStatus.Arquivado, DemandStatus.Pausado]
+
+    const renderStatusCard = (statusKey: DemandStatus) => {
+      const statusInfo = STATUS_INFO.find((s) => s.key === statusKey)
+      if (!statusInfo) return null
+
+      const transitions = getTransitionsFrom(statusInfo.key)
+      const transitionsFromHovered = hoveredStatus ? getTransitionsFrom(hoveredStatus) : []
+      const isHighlighted = hoveredStatus
+        ? hoveredStatus === statusInfo.key || transitionsFromHovered.includes(statusInfo.key)
+        : false
+      const isHovered = hoveredStatus === statusInfo.key
+      // Comparação flexível: aceita tanto o enum quanto a string (com ou sem acento)
+      const isCurrent =
+        currentStatus === statusInfo.key ||
+        currentStatus === statusInfo.name ||
+        String(currentStatus) === String(statusInfo.key)
+      const showTooltip = tooltipStatus === statusInfo.key
+
+      return (
+        <div
+          key={statusKey}
+          className={`relative flex flex-col items-center transition-all duration-300 ${
+            isHighlighted ? "opacity-100 scale-105" : hoveredStatus ? "opacity-30 scale-95" : "opacity-100"
+          }`}
+          onMouseEnter={() => {
+            setHoveredStatus(statusInfo.key)
+            setTooltipStatus(statusInfo.key)
+          }}
+          onMouseLeave={() => {
+            setHoveredStatus(null)
+            setTooltipStatus(null)
+          }}
+        >
+          {/* Tooltip Elegante - Renderizado via Portal para ultrapassar limites da div */}
+          {showTooltip &&
+            typeof window !== "undefined" &&
+            createPortal(
+              <div
+                className="fixed z-[10001] animate-in fade-in slide-in-from-bottom-2 duration-200 pointer-events-none"
+                style={{
+                  top: `${
+                    document
+                      .getElementById(`status-card-${statusKey}`)
+                      ?.getBoundingClientRect().top ?? 0
+                  }px`,
+                  left: `${
+                    (document.getElementById(`status-card-${statusKey}`)?.getBoundingClientRect().left ?? 0) +
+                    (document.getElementById(`status-card-${statusKey}`)?.getBoundingClientRect().width ?? 0) / 2
+                  }px`,
+                  transform: "translate(-50%, -100%)",
+                  marginTop: "-12px",
+                }}
+              >
+                <div className="bg-slate-900 text-white px-4 py-2 rounded-lg shadow-xl text-xs font-medium whitespace-nowrap">
+                  {statusInfo.description}
+                  {transitions.length > 0 && (
+                    <div className="text-slate-300 mt-1">
+                      Pode ir para: {transitions.length} {transitions.length === 1 ? "status" : "status"} (
+                      {transitions
+                        .map((t) => STATUS_INFO.find((s) => s.key === t)?.name)
+                        .filter(Boolean)
+                        .join(", ")}
+                      )
+                    </div>
+                  )}
+                  {transitions.length === 0 && (
+                    <div className="text-slate-300 mt-1">Não pode mais ser alterado</div>
+                  )}
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45"></div>
+                </div>
+              </div>,
+              document.body
+            )}
+
+          {/* Card do Status */}
+          <div
+            id={`status-card-${statusKey}`}
+            className={`relative px-5 py-3 rounded-xl text-white font-semibold text-sm shadow-lg cursor-pointer
+              transition-all duration-300 min-w-[120px] text-center
+              ${isHovered ? "ring-4 ring-white ring-opacity-50 shadow-2xl" : ""}
+              ${isCurrent ? "ring-4 ring-yellow-400 ring-opacity-80" : ""}`}
+            style={{ backgroundColor: statusInfo.color }}
+          >
+            {/* Badge "Status Atual" */}
+            {isCurrent && (
+              <div className="absolute -top-2 -right-2 bg-yellow-400 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+                ATUAL
+              </div>
+            )}
+            <div className="font-bold text-sm">{statusInfo.name}</div>
+          </div>
+
+          {/* Descrição (apenas em mobile ou quando não hover) */}
+          {!showTooltip && (
+            <div className="mt-2 text-[10px] text-slate-500 text-center max-w-[120px] lg:hidden">
+              {statusInfo.description}
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Título */}
         <div className="text-center">
-          <h3 className="text-lg font-bold text-slate-800">Fluxo de Status da Demanda</h3>
-          <p className="text-sm text-slate-600 mt-1">Visualize os possíveis caminhos que uma demanda pode percorrer</p>
+          <h3 className="text-xl font-bold text-slate-800">Fluxo de Status da Demanda</h3>
+          <p className="text-sm text-slate-600 mt-2">
+            Passe o mouse sobre um status para destacar suas possíveis transições
+          </p>
         </div>
 
-        {/* Diagrama */}
-        <div className="space-y-3">
-          {STATUS_INFO.map((statusInfo) => {
-            const transitions = getTransitionsFrom(statusInfo.key)
-            const isHovered = hoveredStatus === statusInfo.key
-            const isHighlighted = hoveredStatus
-              ? hoveredStatus === statusInfo.key || transitions.includes(hoveredStatus)
-              : false
+        {/* Diagrama Horizontal */}
+        <div className="space-y-8">
+          {/* Fluxo Principal */}
+          <div className="py-6">
+            <div className="text-xs font-semibold text-slate-500 mb-4 text-center">FLUXO PRINCIPAL</div>
+            <div className="flex items-center justify-center gap-3 flex-nowrap overflow-x-auto px-8 py-4">
+              {mainFlowStatuses.map((status, index) => (
+                <React.Fragment key={status}>
+                  {renderStatusCard(status)}
+                  {index < mainFlowStatuses.length - 1 && (
+                    <div className="text-slate-300 text-xl font-light flex-shrink-0">→</div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
 
-            return (
-              <div
-                key={statusInfo.key}
-                className={`transition-all ${isHighlighted ? "opacity-100" : hoveredStatus ? "opacity-30" : "opacity-100"}`}
-                onMouseEnter={() => setHoveredStatus(statusInfo.key)}
-                onMouseLeave={() => setHoveredStatus(null)}
-              >
-                {/* Status atual */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="px-4 py-2 rounded-lg text-white font-medium text-sm shadow-md min-w-[140px] text-center cursor-help"
-                    style={{ backgroundColor: statusInfo.color }}
-                  >
-                    {statusInfo.name}
-                  </div>
-                  <div className="flex-1 text-xs text-slate-600">{statusInfo.description}</div>
-                </div>
-
-                {/* Transições possíveis */}
-                {transitions.length > 0 && (
-                  <div className="ml-8 mt-2 flex items-center gap-2">
-                    <div className="text-slate-400 text-xs font-medium">Pode ir para:</div>
-                    <div className="flex flex-wrap gap-2">
-                      {transitions.map((nextStatus) => {
-                        const nextInfo = STATUS_INFO.find((s) => s.key === nextStatus)
-                        if (!nextInfo) return null
-                        return (
-                          <div
-                            key={nextStatus}
-                            className="px-3 py-1 rounded text-white text-xs font-medium shadow-sm"
-                            style={{ backgroundColor: nextInfo.color }}
-                          >
-                            {nextInfo.name}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Status final */}
-                {transitions.length === 0 && (
-                  <div className="ml-8 mt-2 text-xs text-slate-500 italic">Status final - não pode ser alterado</div>
-                )}
-              </div>
-            )
-          })}
+          {/* Status Secundários */}
+          <div className="py-4">
+            <div className="text-xs font-semibold text-slate-500 mb-4 text-center">STATUS ALTERNATIVOS</div>
+            <div className="flex items-center justify-center gap-8 px-8 py-4">
+              {secondaryStatuses.map((status) => renderStatusCard(status))}
+            </div>
+          </div>
         </div>
 
         {/* Legenda */}
         <div className="border-t pt-4 mt-6">
-          <p className="text-xs text-slate-600 text-center">
-            <strong>Dica:</strong> Passe o mouse sobre um status para destacar suas possíveis transições
+          <p className="text-xs text-slate-500 text-center italic">
+            Os status alternativos podem ser acessados de múltiplos pontos do fluxo
           </p>
         </div>
       </div>
@@ -155,11 +229,11 @@ export function StatusFlowDiagram({ className = "" }: StatusFlowDiagramProps) {
         typeof window !== "undefined" &&
         createPortal(
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000] p-4"
+            className="fixed inset-0 bg-slate-200/40 backdrop-blur-sm flex items-center justify-center z-[10000] p-4"
             onClick={() => setIsOpen(false)}
           >
             <div
-              className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-lg shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -175,17 +249,7 @@ export function StatusFlowDiagram({ className = "" }: StatusFlowDiagramProps) {
               </div>
 
               {/* Conteúdo */}
-              <div className="p-6">{renderFlowDiagram()}</div>
-
-              {/* Footer */}
-              <div className="sticky bottom-0 bg-slate-50 border-t px-6 py-4 flex justify-end">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium"
-                >
-                  Fechar
-                </button>
-              </div>
+              <div className="p-8 pb-8">{renderFlowDiagram()}</div>
             </div>
           </div>,
           document.body

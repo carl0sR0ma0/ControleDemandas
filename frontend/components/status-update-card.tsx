@@ -13,25 +13,13 @@ import { DemandStatus } from "@/types/api"
 import { useChangeDemandStatus, useUpdateDemand } from "@/hooks/useDemands"
 import { Badge } from "@/components/ui/badge"
 import { useHasPermission, PERMS } from "@/hooks/useAuthGuard"
+import { STATUS_TRANSITIONS } from "@/lib/status-transitions"
 
 interface StatusUpdateCardProps {
   demandId: string
   currentStatus: DemandStatus
   currentResponsible?: string | null
   currentEstimatedDate?: string | null
-}
-
-// Workflow flexível: define as transições permitidas
-const STATUS_TRANSITIONS: Record<DemandStatus, DemandStatus[]> = {
-  [DemandStatus.Aberta]: [DemandStatus.Arquivado, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Arquivado]: [DemandStatus.Ranqueado, DemandStatus.Aberta],
-  [DemandStatus.Ranqueado]: [DemandStatus.Aprovacao, DemandStatus.Arquivado, DemandStatus.Aberta, DemandStatus.Concluida],
-  [DemandStatus.Aprovacao]: [DemandStatus.Documentacao, DemandStatus.Ranqueado, DemandStatus.Concluida],
-  [DemandStatus.Documentacao]: [DemandStatus.Execucao, DemandStatus.Aprovacao, DemandStatus.Concluida],
-  [DemandStatus.Execucao]: [DemandStatus.Pausado, DemandStatus.Validacao, DemandStatus.Documentacao, DemandStatus.Concluida],
-  [DemandStatus.Pausado]: [DemandStatus.Execucao, DemandStatus.Validacao],
-  [DemandStatus.Validacao]: [DemandStatus.Concluida, DemandStatus.Pausado, DemandStatus.Execucao],
-  [DemandStatus.Concluida]: [], // Status final - não pode mudar
 }
 
 const getStatusLabel = (status: DemandStatus) => {

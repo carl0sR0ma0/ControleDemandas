@@ -198,63 +198,106 @@ public static class DemandEndpoints
         });
 
         g.MapPost("/", [Authorize(Policy = "PERM:" + nameof(Permission.RegistrarDemandas))] async (
-            AppDbContext db, ProtocolService proto, DemandNotificationService notificationService, CreateDemandDto dto, ClaimsPrincipal user) =>
+            AppDbContext db, ProtocolService proto, DemandNotificationService notificationService, CreateDemandDto dto, ClaimsPrincipal user, ILogger<Program> logger) =>
         {
-            var protocol = await proto.GenerateAsync();
-
-            var module = await db.Modules.FindAsync(dto.ModuleId);
-            if (module is null) return Results.BadRequest(new { error = "module_not_found" });
-
-            var requester = await db.Users.FindAsync(dto.RequesterUserId);
-            if (requester is null) return Results.BadRequest(new { error = "requester_not_found" });
-
-            var area = await db.Areas.FindAsync(dto.ReporterAreaId);
-            if (area is null) return Results.BadRequest(new { error = "area_not_found" });
-
-            var unit = await db.Units.FindAsync(dto.UnitId);
-            if (unit is null) return Results.BadRequest(new { error = "unit_not_found" });
-
-            if (dto.SystemVersionId is Guid versionId)
+            try
             {
-                var version = await db.SystemVersions.FindAsync(versionId);
-                if (version is null) return Results.BadRequest(new { error = "system_version_not_found" });
-                if (version.SystemEntityId != module.SystemEntityId)
-                    return Results.BadRequest(new { error = "system_version_mismatch" });
+                logger.LogInformation("Creating new demand");
+
+                var protocol = await proto.GenerateAsync();
+                logger.LogInformation("Generated protocol: {Protocol}", protocol);
+
+                var module = await db.Modules.FindAsync(dto.ModuleId);
+                if (module is null)
+                {
+                    logger.LogWarning("Module {ModuleId} not found", dto.ModuleId);
+                    return Results.BadRequest(new { error = "module_not_found" });
+                }
+
+                var requester = await db.Users.FindAsync(dto.RequesterUserId);
+                if (requester is null)
+                {
+                    logger.LogWarning("Requester {RequesterUserId} not found", dto.RequesterUserId);
+                    return Results.BadRequest(new { error = "requester_not_found" });
+                }
+
+                var area = await db.Areas.FindAsync(dto.ReporterAreaId);
+                if (area is null)
+                {
+                    logger.LogWarning("Area {ReporterAreaId} not found", dto.ReporterAreaId);
+                    return Results.BadRequest(new { error = "area_not_found" });
+                }
+
+                var unit = await db.Units.FindAsync(dto.UnitId);
+                if (unit is null)
+                {
+                    logger.LogWarning("Unit {UnitId} not found", dto.UnitId);
+                    return Results.BadRequest(new { error = "unit_not_found" });
+                }
+
+                if (dto.SystemVersionId is Guid versionId)
+                {
+                    var version = await db.SystemVersions.FindAsync(versionId);
+                    if (version is null)
+                    {
+                        logger.LogWarning("System version {SystemVersionId} not found", versionId);
+                        return Results.BadRequest(new { error = "system_version_not_found" });
+                    }
+                    if (version.SystemEntityId != module.SystemEntityId)
+                    {
+                        logger.LogWarning("System version {SystemVersionId} does not match module system {SystemEntityId}",
+                            versionId, module.SystemEntityId);
+                        return Results.BadRequest(new { error = "system_version_mismatch" });
+                    }
+                }
+
+                var d = new Demand
+                {
+                    Protocol = protocol,
+                    Description = dto.Description,
+                    Observation = dto.Observation,
+                    ModuleId = dto.ModuleId,
+                    RequesterUserId = dto.RequesterUserId,
+                    ReporterAreaId = dto.ReporterAreaId,
+                    OccurrenceType = dto.OccurrenceType,
+                    UnitId = dto.UnitId,
+                    Classification = dto.Classification,
+                    Responsible = dto.Responsible,
+                    SystemVersionId = dto.SystemVersionId,
+                    DocumentUrl = dto.DocumentUrl
+                };
+
+                d.History.Add(new StatusHistory
+                {
+                    Status = DemandStatus.Aberta,
+                    Author = user.Identity?.Name ?? "sistema",
+                    Note = "Abertura da demanda"
+                });
+
+                // Definir RequesterUser para notificação
+                d.RequesterUser = requester;
+
+                db.Demands.Add(d);
+                logger.LogInformation("Saving demand to database");
+                await db.SaveChangesAsync();
+                logger.LogInformation("Demand {Protocol} saved successfully with ID {Id}", d.Protocol, d.Id);
+
+                // Enviar notificação usando o novo serviço
+                logger.LogInformation("Sending creation notification for demand {Protocol}", d.Protocol);
+                await notificationService.SendCreationAsync(d, dto.ReporterEmail);
+                logger.LogInformation("Creation notification sent for demand {Protocol}", d.Protocol);
+
+                return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
             }
-
-            var d = new Demand
+            catch (Exception ex)
             {
-                Protocol = protocol,
-                Description = dto.Description,
-                Observation = dto.Observation,
-                ModuleId = dto.ModuleId,
-                RequesterUserId = dto.RequesterUserId,
-                ReporterAreaId = dto.ReporterAreaId,
-                OccurrenceType = dto.OccurrenceType,
-                UnitId = dto.UnitId,
-                Classification = dto.Classification,
-                Responsible = dto.Responsible,
-                SystemVersionId = dto.SystemVersionId,
-                DocumentUrl = dto.DocumentUrl
-            };
-
-            d.History.Add(new StatusHistory
-            {
-                Status = DemandStatus.Aberta,
-                Author = user.Identity?.Name ?? "sistema",
-                Note = "Abertura da demanda"
-            });
-
-            // Definir RequesterUser para notificação
-            d.RequesterUser = requester;
-
-            db.Demands.Add(d);
-            await db.SaveChangesAsync();
-
-            // Enviar notificação usando o novo serviço
-            await notificationService.SendCreationAsync(d, dto.ReporterEmail);
-
-            return Results.Created($"/demands/{d.Id}", new { d.Id, d.Protocol });
+                logger.LogError(ex, "Error creating demand. DTO: {@Dto}", dto);
+                return Results.Problem(
+                    title: "Error creating demand",
+                    detail: ex.Message,
+                    statusCode: 500
+                );
+            }
         })
         .AddEndpointFilter(new ValidationFilter<CreateDemandDto>());
 

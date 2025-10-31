@@ -1,24 +1,37 @@
 import { DemandStatus, StatusHistory } from "@/types/api"
+import { STATUS_TRANSITIONS } from "./status-transitions"
 
 /**
- * Define a ordem hierárquica dos status
- * Nota: "Arquivado" está no mesmo nível de "Aberta" pois pode transicionar para/de Aberta
+ * Status considerados "laterais" que não representam retrocesso quando revisitados
+ * Estes são status temporários ou de suspensão que fazem parte do fluxo normal
  */
-const STATUS_HIERARCHY: Record<DemandStatus, number> = {
+const LATERAL_STATUSES = new Set<DemandStatus>([
+  DemandStatus.Pausado,    // Pausas são normais durante execução
+  DemandStatus.Arquivado,  // Arquivamento pode acontecer de múltiplos pontos
+])
+
+/**
+ * Define a progressão natural do fluxo (ordem esperada de avanço)
+ * Usado para detectar quando uma demanda volta para trás no fluxo
+ */
+const FLOW_PROGRESSION: Record<DemandStatus, number> = {
   [DemandStatus.Aberta]: 0,
-  [DemandStatus.Arquivado]: 0, // Mesmo nível de Aberta (status lateral, não progressão)
+  [DemandStatus.Arquivado]: 0,     // Lateral - mesmo nível que Aberta
   [DemandStatus.Ranqueado]: 1,
-  [DemandStatus.Documentacao]: 2,
-  [DemandStatus.Aprovacao]: 3,
+  [DemandStatus.Aprovacao]: 2,
+  [DemandStatus.Documentacao]: 3,
   [DemandStatus.Execucao]: 4,
-  [DemandStatus.Pausado]: 5,
-  [DemandStatus.Validacao]: 6,
-  [DemandStatus.Concluida]: 7,
+  [DemandStatus.Pausado]: 4,       // Lateral - mesmo nível que Execução
+  [DemandStatus.Validacao]: 5,
+  [DemandStatus.Concluida]: 6,
 }
 
 /**
  * Analisa o histórico de status e detecta retrocessos para cada status
- * Um retrocesso ocorre quando um status é revisitado após ter avançado para um status de nível superior
+ *
+ * Um retrocesso é detectado quando:
+ * 1. Uma demanda retorna para um status que já foi visitado anteriormente
+ * 2. E esse retorno representa retrabalho (não é uma transição lateral normal)
  *
  * @param history - Array de StatusHistory ordenado por data
  * @returns Map com o número de retrocessos para cada status
@@ -35,25 +48,49 @@ export function detectStatusRegressions(history: StatusHistory[]): Map<DemandSta
     new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
-  // Rastreia o nível máximo atingido até o momento
-  let maxLevelReached = STATUS_HIERARCHY[sortedHistory[0].status]
-
-  // Rastreia quantas vezes cada status foi visitado após ter avançado
-  const statusVisits = new Map<DemandStatus, number>()
+  // Rastreia a progressão máxima alcançada e os status já visitados
+  let maxProgressionReached = FLOW_PROGRESSION[sortedHistory[0].status]
+  const visitedStatuses = new Set<DemandStatus>()
+  visitedStatuses.add(sortedHistory[0].status)
 
   for (let i = 1; i < sortedHistory.length; i++) {
     const currentStatus = sortedHistory[i].status
-    const currentLevel = STATUS_HIERARCHY[currentStatus]
+    const currentProgression = FLOW_PROGRESSION[currentStatus]
+    const previousStatus = sortedHistory[i - 1].status
 
-    // Se o nível atual é menor que o máximo já atingido, é um retrocesso
-    if (currentLevel < maxLevelReached) {
-      // Incrementa o contador de retrocessos para este status
-      const currentCount = regressionCounts.get(currentStatus) || 0
-      regressionCounts.set(currentStatus, currentCount + 1)
+    // Atualiza o nível máximo de progressão
+    if (currentProgression > maxProgressionReached) {
+      maxProgressionReached = currentProgression
     }
 
-    // Atualiza o nível máximo se necessário
-    maxLevelReached = Math.max(maxLevelReached, currentLevel)
+    // Verifica se é um retrocesso
+    const isRevisit = visitedStatuses.has(currentStatus)
+    const isProgressionBackward = currentProgression < maxProgressionReached
+    const isLateralStatus = LATERAL_STATUSES.has(currentStatus)
+
+    // Um retrocesso ocorre quando:
+    // - Revisita um status que já foi visitado
+    // - E não é um status lateral (Pausado/Arquivado)
+    // - Ou quando volta na progressão do fluxo
+    if ((isRevisit || isProgressionBackward) && !isLateralStatus) {
+      // Verifica se a transição de volta é válida no fluxo
+      const validTransitions = STATUS_TRANSITIONS[previousStatus] || []
+      const isValidTransition = validTransitions.includes(currentStatus)
+
+      // Se é uma transição válida de volta, mas já visitou antes, conta como retrocesso
+      if (isRevisit && isValidTransition) {
+        const currentCount = regressionCounts.get(currentStatus) || 0
+        regressionCounts.set(currentStatus, currentCount + 1)
+      }
+      // Se é uma progressão backward que não é status lateral, é retrocesso
+      else if (isProgressionBackward && !isLateralStatus) {
+        const currentCount = regressionCounts.get(currentStatus) || 0
+        regressionCounts.set(currentStatus, currentCount + 1)
+      }
+    }
+
+    // Marca o status como visitado
+    visitedStatuses.add(currentStatus)
   }
 
   return regressionCounts
