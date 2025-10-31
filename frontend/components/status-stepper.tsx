@@ -5,6 +5,7 @@ import { CheckCircle, Circle, Clock, CircleCheckBig } from "lucide-react"
 import { DemandStatus, type StatusHistory } from "@/types/api"
 import { detectStatusRegressions, getRegressionColor } from "@/lib/status-regression"
 import { createPortal } from "react-dom"
+import { StatusFlowDiagram } from "@/components/status-flow-diagram"
 
 interface StatusStepperProps {
   currentStatus: string
@@ -104,7 +105,12 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
   const circleRefs = useRef<(HTMLDivElement | null)[]>([])
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto relative">
+      {/* Ícone de fluxo no canto superior direito */}
+      <div className="absolute top-0 right-0 z-20">
+        <StatusFlowDiagram />
+      </div>
+
       <div className="flex items-center relative">
         {steps.map((step, index) => {
           const isCompleted = index < currentIndex
