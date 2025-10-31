@@ -1,0 +1,38 @@
+name: Deploy to Render and Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_SERVICE_ID: prj-d41vdn7gi27c739pnjc0
+          RENDER_API_KEY: rnd_b0efpcV8EJ8hdqdCoNERibirIMZG
+        run: |
+          if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_API_KEY" ]; then
+            echo "Render secrets not configured. Skipping Render deploy."
+            exit 0
+          fi
+
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache":false}' \
+            "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys"
+
+      - name: Trigger Vercel deploy
+        env:
+          VERCEL_DEPLOY_HOOK_URL: https://api.vercel.com/v1/integrations/deploy/prj_LUgiUDA2SoKxyxuPSZjnAyMUfYtP/7N4SVjD8rQ
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Vercel deploy hook URL not configured. Skipping Vercel deploy."
+            exit 0
+          fi
+
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"

@@ -4,6 +4,6 @@ services:
     env: docker
     plan: free
     autoDeploy: true
-    dockerfilePath: backend/src/Api/Dockerfile
+    dockerfilePath: backend/Dockerfile
     buildContext: backend
     healthCheckPath: /health
