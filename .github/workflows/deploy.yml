@@ -11,11 +11,15 @@ on:
 
 jobs:
   deploy:
-    if: github.event_name != 'pull_request'
-    environment: Prodcution
+    environment: ${{ github.event_name == 'pull_request' && 'preview' || 'Prodcution' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Skip deploy for pull requests
+        if: github.event_name == 'pull_request'
+        run: echo "Pull request detected. Skipping Render/Vercel deploy. Check satisfied."
+
       - name: Trigger Render deploy
+        if: github.event_name != 'pull_request'
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -33,6 +37,7 @@ jobs:
             "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys"
 
       - name: Trigger Vercel deploy
+        if: github.event_name != 'pull_request'
         env:
           VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
@@ -42,25 +47,3 @@ jobs:
           fi
 
           curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
-
-  deploy_placeholder:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      statuses: write
-    steps:
-      - name: Mark deploy check as skipped
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/statuses/${SHA}" \
-            -d '{"state":"success","context":"Deploy to Render and Vercel / deploy","description":"Check satisfied on pull request"}'
-
-      - name: Summary
-        run: echo "Pull request placeholder completed."
