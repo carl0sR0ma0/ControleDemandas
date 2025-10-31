@@ -12,6 +12,8 @@ export function colorByStatus(s: DemandStatus): string {
   switch (s) {
     case DemandStatus.Aberta:
       return COLORS.primary;
+    case DemandStatus.Arquivado:
+      return "#78909C"; // Cinza
     case DemandStatus.Ranqueado:
       return COLORS.primary; // Em Aberto
     case DemandStatus.Documentacao:
@@ -34,6 +36,7 @@ export function colorByStatus(s: DemandStatus): string {
 export const statusLabel = (s: DemandStatus) =>
   ({
     [DemandStatus.Aberta]: "Aberta",
+    [DemandStatus.Arquivado]: "Arquivado",
     [DemandStatus.Ranqueado]: "Ranqueado (Em Aberto)",
     [DemandStatus.Documentacao]: "Documentação",
     [DemandStatus.Aprovacao]: "Aprovação",

@@ -9,6 +9,7 @@ import { createPortal } from "react-dom"
 interface StatusStepperProps {
   currentStatus: string
   history: StatusHistory[]
+  showNoteTooltips?: boolean
 }
 
 interface TooltipPortalProps {
@@ -47,8 +48,8 @@ function TooltipPortal({ children, targetRef, show }: TooltipPortalProps) {
   )
 }
 
-export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
-  const statusOrder = [
+export function StatusStepper({ currentStatus, history, showNoteTooltips = false }: StatusStepperProps) {
+  const allStatusDefinitions = [
     { key: DemandStatus.Aberta, name: "Aberta", color: "#FFA726" },
     { key: DemandStatus.Arquivado, name: "Arquivado", color: "#78909C" },
     { key: DemandStatus.Ranqueado, name: "Ranqueado", color: "#B0BEC5" },
@@ -68,6 +69,28 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
     history.map((h) => [h.status, h.date])
   )
 
+  // Ordenar histórico por data (mais antigo primeiro) para garantir ordem cronológica correta
+  const sortedHistory = [...history].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+
+  // Filtrar apenas os status que aparecem no histórico da demanda
+  // Mantém a ordem cronológica do histórico (primeira aparição de cada status)
+  const uniqueStatusOrder: string[] = []
+  const seen = new Set<string>()
+
+  for (const h of sortedHistory) {
+    if (!seen.has(h.status)) {
+      uniqueStatusOrder.push(h.status)
+      seen.add(h.status)
+    }
+  }
+
+  // Mapear para as definições completas mantendo a ordem cronológica
+  const statusOrder = uniqueStatusOrder
+    .map(status => allStatusDefinitions.find(def => def.key === status || def.name === status))
+    .filter((def): def is typeof allStatusDefinitions[0] => def !== undefined)
+
   const steps = statusOrder.map((s) => ({
     name: s.name,
     key: s.key,
@@ -79,15 +102,20 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
 
   const currentIndex = steps.findIndex((step) => step.key === currentStatus || step.name === currentStatus)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [hoveredNoteIndex, setHoveredNoteIndex] = useState<number | null>(null)
   const circleRefs = useRef<(HTMLDivElement | null)[]>([])
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto relative">
       <div className="flex items-center relative">
         {steps.map((step, index) => {
           const isCompleted = index < currentIndex
           const isCurrent = index === currentIndex
           const hasRegression = step.regressionCount > 0
+
+          // Busca a nota do histórico para este status
+          const historyEntry = history.find((h) => h.status === step.key || h.status === step.name)
+          const hasNote = showNoteTooltips && historyEntry?.note
 
           return (
             <div key={step.name} className="flex flex-col items-center relative z-10 flex-1">
@@ -98,7 +126,7 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
                     circleRefs.current[index] = el
                   }}
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-all ${
-                    hasRegression ? "border-4 shadow-lg cursor-help" : ""
+                    hasRegression ? "border-4 shadow-lg cursor-help" : hasNote ? "cursor-help" : ""
                   } ${
                     isCompleted
                       ? "bg-green-500 border-green-500 text-white"
@@ -122,8 +150,17 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
                           ? "#10b981"
                           : undefined,
                   }}
-                  onMouseEnter={() => hasRegression && setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                  onMouseEnter={() => {
+                    if (hasRegression) {
+                      setHoveredIndex(index)
+                    } else if (hasNote) {
+                      setHoveredNoteIndex(index)
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredIndex(null)
+                    setHoveredNoteIndex(null)
+                  }}
                 >
                   {isCompleted ? (
                     <CheckCircle className="w-5 h-5" />
@@ -166,6 +203,37 @@ export function StatusStepper({ currentStatus, history }: StatusStepperProps) {
                           borderLeft: "6px solid transparent",
                           borderRight: "6px solid transparent",
                           borderTop: "6px solid #1e293b",
+                        }}
+                      />
+                    </div>
+                  </TooltipPortal>
+                )}
+
+                {/* Tooltip de Observação usando Portal */}
+                {hasNote && !hasRegression && hoveredNoteIndex === index && (
+                  <TooltipPortal
+                    targetRef={{ current: circleRefs.current[index] }}
+                    show={hoveredNoteIndex === index}
+                  >
+                    <div className="px-3 py-2 bg-blue-600 text-white text-xs rounded-lg shadow-xl max-w-xs">
+                      <div className="font-bold mb-1 text-center">
+                        📝 Observação
+                      </div>
+                      <div className="text-center">
+                        {historyEntry?.note}
+                      </div>
+                      {historyEntry?.responsibleUser && (
+                        <div className="text-center text-blue-100 mt-1 text-[10px]">
+                          Responsável: {historyEntry.responsibleUser}
+                        </div>
+                      )}
+                      {/* Seta do tooltip */}
+                      <div
+                        className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0"
+                        style={{
+                          borderLeft: "6px solid transparent",
+                          borderRight: "6px solid transparent",
+                          borderTop: "6px solid #2563eb",
                         }}
                       />
                     </div>
