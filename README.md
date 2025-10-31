@@ -64,6 +64,23 @@ Consulte `DEPLOY.md` para um checklist completo de producao.
 - `DEPLOY.md`: matriz de opcoes, checklist de producao e comandos Docker.
 - `backend/README.md`: detalhes da API, endpoints, fluxo `/init` e dicas para Visual Studio.
 - `doc/`: scripts e guias especificos (Azure, IIS, escalabilidade).
+- `doc/architecture-overview.md`: briefing tecnico para agentes automatos executarem tarefas com contexto.
+- `scripts/migrate_next_tasks.py`: utilitario para migrar o backlog do `doc/backlog/NEXT_TASKS.md` para Issues/Projects do GitHub.
+
+## Backlog e projetos
+- Tarefas ativas devem ser gerenciadas pelo projeto GitHub **Controle de demandas** (Projects V2).
+- Para migrar o conteúdo atual de `doc/backlog/NEXT_TASKS.md`, utilize:
+  ```bash
+  pip install requests  # se ainda não tiver
+  export GITHUB_TOKEN=<token-com-escopos-repo-e-project>
+  python scripts/migrate_next_tasks.py \
+    --owner <seu-usuario-ou-org> \
+    --repo ControleDemandas \
+    --project-number <numero-na-url-do-projeto> \
+    --dry-run
+  ```
+- Revise a saída; se estiver ok, rode novamente sem `--dry-run` para criar as issues e adicioná-las ao projeto.
+- Após a migração, atualize ou arquive `doc/backlog/NEXT_TASKS.md` conforme necessário.
 
 ## Contribuindo
 1. Abra uma issue descrevendo o problema ou melhoria.

@@ -1,6 +1,8 @@
 # Novas Tasks Planejadas
 
 > Observacao: migrations e ajustes de banco continuam sob responsabilidade do mantenedor. As tasks abaixo devem manter a aplicacao escalavel e funcional sem exigir execucao local de `dotnet ef database update`.
+>
+> **Estado atual:** o backlog oficial passa a ser controlado no projeto GitHub **Controle de demandas**. Utilize o script `scripts/migrate_next_tasks.py` para converter estas entradas em issues e adicioná-las automaticamente ao projeto. Após a migração, este arquivo pode ser arquivado ou utilizado apenas como rascunho.
 
 ## 1. Ajuste de Exibicao do Status "Arquivada"
 - **Objetivo:** Garantir que o status "Arquivada" so apareca na linha do tempo ou historico da demanda quando ela de fato tiver atingido esse estado.
