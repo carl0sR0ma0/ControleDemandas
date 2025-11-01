@@ -1,10 +1,25 @@
 import { http } from "./http";
 
+export enum SprintStatus {
+  NotStarted = 0,
+  InProgress = 1,
+  Paused = 2,
+  Completed = 3
+}
+
+export enum SprintItemStatus {
+  Backlog = 0,
+  Todo = 1,
+  InProgress = 2,
+  Done = 3
+}
+
 export type SprintSummary = {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
+  status: SprintStatus;
   percent: number;
 };
 
@@ -13,6 +28,14 @@ export type SprintItem = {
   demandId: string;
   plannedHours: number;
   workedHours: number;
+  status: SprintItemStatus;
+  demand?: {
+    id: string;
+    protocol: string;
+    description: string;
+    priority: number | null;
+    status: number;
+  };
 };
 
 export type SprintDetail = {
@@ -20,6 +43,7 @@ export type SprintDetail = {
   name: string;
   startDate: string;
   endDate: string;
+  status: SprintStatus;
   items: SprintItem[];
 };
 
@@ -57,6 +81,16 @@ export async function removeSprint(id: string) {
 
 export async function getBurndown(id: string) {
   const res = await http.get<{ date: string; planned: number; remaining: number }[]>(`/sprints/${id}/burndown`);
+  return res.data;
+}
+
+export async function updateSprintStatus(id: string, status: SprintStatus) {
+  const res = await http.patch<{ id: string; status: SprintStatus }>(`/sprints/${id}/status`, { status });
+  return res.data;
+}
+
+export async function updateSprintItemStatus(itemId: string, status: SprintItemStatus) {
+  const res = await http.patch<{ id: string; status: SprintItemStatus }>(`/sprints/items/${itemId}/status`, { status });
   return res.data;
 }
 

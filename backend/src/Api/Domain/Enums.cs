@@ -31,3 +31,19 @@ public enum Permission : long
 
 public enum OccurrenceType { Incremental = 1, Melhoria = 2, Bug = 3 }
 public enum Classification { Urgente = 1, Medio = 2, Baixo = 3 }
+
+public enum SprintStatus
+{
+    NotStarted = 0,
+    InProgress = 1,
+    Paused = 2,
+    Completed = 3
+}
+
+public enum SprintItemStatus
+{
+    Backlog = 0,
+    Todo = 1,
+    InProgress = 2,
+    Done = 3
+}

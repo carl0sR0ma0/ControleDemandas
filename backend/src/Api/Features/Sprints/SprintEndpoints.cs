@@ -25,6 +25,12 @@ public static class SprintEndpoints
 
         group.MapGet("/{id:guid}/burndown", GetBurndown)
             .RequireAuthorization($"PERM:{nameof(Permission.VisualizarDemandas)}");
+
+        group.MapPatch("/{id:guid}/status", UpdateSprintStatus)
+            .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
+
+        group.MapPatch("/items/{itemId:guid}/status", UpdateSprintItemStatus)
+            .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
     }
 
     private static async Task<IResult> ListSprints(AppDbContext db)
@@ -38,6 +44,7 @@ public static class SprintEndpoints
                 s.Name,
                 s.StartDate,
                 s.EndDate,
+                s.Status,
                 percent = CalcPercent(s.Items)
             })
             .ToListAsync();
@@ -49,6 +56,7 @@ public static class SprintEndpoints
     {
         var sprint = await db.Sprints
             .Include(s => s.Items)
+                .ThenInclude(i => i.Demand)
             .Where(s => s.Id == id)
             .Select(s => new
             {
@@ -56,12 +64,22 @@ public static class SprintEndpoints
                 s.Name,
                 s.StartDate,
                 s.EndDate,
+                s.Status,
                 items = s.Items.Select(i => new
                 {
                     i.Id,
                     i.DemandId,
                     i.PlannedHours,
-                    i.WorkedHours
+                    i.WorkedHours,
+                    i.Status,
+                    demand = new
+                    {
+                        i.Demand.Id,
+                        i.Demand.Protocol,
+                        i.Demand.Description,
+                        i.Demand.Priority,
+                        i.Demand.Status
+                    }
                 }).ToList()
             })
             .FirstOrDefaultAsync();
@@ -158,6 +176,32 @@ public static class SprintEndpoints
         }
 
         return Results.Ok(points);
+    }
+
+    public record UpdateSprintStatusDto(SprintStatus Status);
+
+    private static async Task<IResult> UpdateSprintStatus(Guid id, [FromBody] UpdateSprintStatusDto dto, AppDbContext db)
+    {
+        var sprint = await db.Sprints.FindAsync(id);
+        if (sprint is null) return Results.NotFound(new { error = "Sprint nao encontrada" });
+
+        sprint.Status = dto.Status;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new { id = sprint.Id, status = sprint.Status });
+    }
+
+    public record UpdateSprintItemStatusDto(SprintItemStatus Status);
+
+    private static async Task<IResult> UpdateSprintItemStatus(Guid itemId, [FromBody] UpdateSprintItemStatusDto dto, AppDbContext db)
+    {
+        var item = await db.SprintItems.FindAsync(itemId);
+        if (item is null) return Results.NotFound(new { error = "Item nao encontrado" });
+
+        item.Status = dto.Status;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new { id = item.Id, status = item.Status });
     }
 
     private static double CalcPercent(ICollection<Api.Domain.SprintItem> items)

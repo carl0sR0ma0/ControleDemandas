@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Shield,
   FolderKanban,
+  Timer,
 } from "lucide-react";
 
 // (opcional) bits iguais aos do backend
@@ -79,6 +80,7 @@ export function Sidebar() {
     ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: FileText, label: "Demandas", href: "/demandas" }] : []),
     ...(hasPermission(PERMS.RegistrarDemandas) ? [{ icon: Plus, label: "Nova Demanda", href: "/demandas/nova" }] : []),
     ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: FolderKanban, label: "Backlogs", href: "/backlogs" }] : []),
+    ...(hasPermission(PERMS.VisualizarDemandas) ? [{ icon: Timer, label: "Sprints", href: "/sprints" }] : []),
     { icon: Search, label: "Consultar Protocolo", href: "/consultar" },
     ...(hasPermission(PERMS.GerenciarUsuarios) ? [{ icon: Users, label: "Usuários", href: "/usuarios" }] : []),
     ...(hasPermission(PERMS.GerenciarPerfis) ? [{ icon: Shield, label: "Perfis", href: "/perfis" }] : []),

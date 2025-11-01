@@ -189,6 +189,7 @@ public class Sprint
     [MaxLength(160)] public string Name { get; set; } = default!;
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
+    public SprintStatus Status { get; set; } = SprintStatus.NotStarted;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<SprintItem> Items { get; set; } = [];
@@ -206,4 +207,5 @@ public class SprintItem
 
     public double PlannedHours { get; set; }
     public double WorkedHours { get; set; }
+    public SprintItemStatus Status { get; set; } = SprintItemStatus.Backlog;
 }

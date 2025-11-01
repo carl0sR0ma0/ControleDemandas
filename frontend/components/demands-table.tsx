@@ -1,22 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDemandList } from "@/hooks/useDemands";
 import { OccurrenceType, Classification, DemandStatus, DemandListItem } from "@/types/api";
 import { PriorityCell } from "@/components/priority-cell";
 import { useAuth } from "@/hooks/useAuth";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { listBacklogs } from "@/lib/api/backlogs";
 
 interface DemandsTableProps {
   selectedDemands?: string[];
@@ -29,23 +28,26 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
 
   const { data, isLoading } = useDemandList({ page: 1, size: 1000, q: searchTerm || undefined });
   const items = data?.items ?? [];
-  const total = data?.total ?? 0;
 
   const { user } = useAuth();
-  const canManageBacklogs = user && (user.permissions & 512) === 512;
+  const canManageBacklogs = !!user && (user.permissions & 512) === 512;
+
+  // Backlog names for tooltip (backlogId -> name)
+  const { data: backlogsData } = useQuery({
+    queryKey: ["backlogs", "list"],
+    queryFn: () => listBacklogs(1, 1000),
+  });
+  const backlogNameById = useMemo(() => {
+    const entries = (backlogsData?.data ?? []).map((b: any) => [b.id, b.name] as const);
+    return new Map(entries);
+  }, [backlogsData]);
 
   const handleSelectDemand = (demandId: string) => {
     if (!onSelectionChange) return;
 
-    // Verificar se a demanda já está em um backlog
     const demand = items.find(d => d.id === demandId);
-    // Regra: não permitir selecionar demandas sem prioridade definida
-    if (demand && (demand.priority === null || demand.priority === undefined)) {
-      return;
-    }
-    if (demand?.backlogId) {
-      return; // Não permitir selecionar demandas que já estão em backlog
-    }
+    if (demand && (demand.priority === null || demand.priority === undefined)) return;
+    if (demand?.backlogId) return; // Não permitir selecionar demandas que já estão em backlog
 
     const newSelection = selectedDemands.includes(demandId)
       ? selectedDemands.filter(id => id !== demandId)
@@ -57,9 +59,8 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
   const handleSelectAll = () => {
     if (!onSelectionChange) return;
 
-    // Filtrar demandas que não estão em backlog
-    const selectableItems = items.filter(d => !d.backlogId);
-    const selectableIds = selectableItems
+    const selectableIds = items
+      .filter(d => !d.backlogId)
       .filter(d => d.priority !== null && d.priority !== undefined)
       .map(d => d.id);
 
@@ -70,7 +71,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
     }
   };
 
-  const showCheckboxes = canManageBacklogs && onSelectionChange;
+  const showCheckboxes = canManageBacklogs && !!onSelectionChange;
 
   const onRowDoubleClick = (protocol: string) => {
     router.push(`/demandas/${protocol}`);
@@ -160,29 +161,15 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
   // Get unique values for filters
   const getUniqueValues = (key: string) => {
     if (items.length === 0) return [];
-
-    const values = items.map((item: DemandListItem) => {
-      if (!item) return null;
-
-      const val = item[key as keyof DemandListItem];
-
-      // Handle null or undefined
-      if (val === null || val === undefined) return null;
-
-      // Handle objects with 'name' property
-      if (typeof val === 'object' && val !== null && 'name' in val) {
-        return val.name;
-      }
-
-      // Handle objects with 'version' property (systemVersion)
-      if (typeof val === 'object' && val !== null && 'version' in val) {
-        return val.version;
-      }
-
-      // Return primitive values directly
-      return val;
-    }).filter((v: any) => v !== null && v !== undefined && v !== "");
-
+    const values = items
+      .map((item: DemandListItem) => {
+        const val = item[key as keyof DemandListItem] as any;
+        if (val === null || val === undefined) return null;
+        if (val && typeof val === "object" && "name" in val) return (val as any).name;
+        if (val && typeof val === "object" && "version" in val) return (val as any).version;
+        return val;
+      })
+      .filter((v: any) => v !== null && v !== undefined && v !== "");
     return [...new Set(values)].sort();
   };
 
@@ -191,19 +178,17 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
   const updateFilter = (column: string, value: string, checked: boolean) => {
     setActiveFilters((prev) => {
       const current = prev[column] || [];
-      if (checked) {
-        return { ...prev, [column]: [...current, value] };
-      } else {
-        return { ...prev, [column]: current.filter((v) => v !== value) };
-      }
+      return checked
+        ? { ...prev, [column]: [...current, value] }
+        : { ...prev, [column]: current.filter((v) => v !== value) };
     });
   };
 
   const clearFilter = (column: string) => {
     setActiveFilters((prev) => {
-      const newFilters = { ...prev };
-      delete newFilters[column];
-      return newFilters;
+      const copy = { ...prev };
+      delete copy[column];
+      return copy;
     });
   };
 
@@ -226,9 +211,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
           <Button
             variant="ghost"
             size="sm"
-            className={`h-6 w-6 p-0 hover:bg-[#04A4A1]/10 ${
-              activeValues.length > 0 ? "bg-[#04A4A1]/20" : ""
-            }`}
+            className={`h-6 w-6 p-0 hover:bg-[#04A4A1]/10 ${activeValues.length > 0 ? "bg-[#04A4A1]/20" : ""}`}
           >
             <Filter className="h-3 w-3 text-slate-500" />
           </Button>
@@ -250,19 +233,14 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
             </div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {values.map((value) => (
-                <div key={value as string} className="flex items-center space-x-2">
+                <div key={String(value)} className="flex items-center space-x-2">
                   <Checkbox
                     id={`${column}-${value}`}
-                    checked={activeValues.includes(value as string)}
-                    onCheckedChange={(checked) =>
-                      updateFilter(column, value as string, checked as boolean)
-                    }
+                    checked={activeValues.includes(String(value))}
+                    onCheckedChange={(checked) => updateFilter(column, String(value), Boolean(checked))}
                   />
-                  <label
-                    htmlFor={`${column}-${value}`}
-                    className="text-sm cursor-pointer flex-1"
-                  >
-                    {value as string}
+                  <label htmlFor={`${column}-${value}`} className="text-sm cursor-pointer flex-1">
+                    {String(value)}
                   </label>
                 </div>
               ))}
@@ -273,12 +251,11 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
     );
   };
 
-  // Apply filters (client-side for demo)
   const filteredItems = items.filter((item: DemandListItem) => {
     return Object.entries(activeFilters).every(([column, values]) => {
       if (values.length === 0) return true;
 
-      let itemValue: string = "";
+      let itemValue = "";
       switch (column) {
         case "system":
           itemValue = item.systemVersion?.version || "";
@@ -287,7 +264,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
           itemValue = item.module?.name || "";
           break;
         case "type":
-          itemValue = item.occurrenceType;
+          itemValue = String(item.occurrenceType);
           break;
         case "area":
           itemValue = item.reporterArea?.name || "";
@@ -296,7 +273,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
           itemValue = item.responsible || "";
           break;
         case "classification":
-          itemValue = item.classification;
+          itemValue = String(item.classification);
           break;
         case "priority":
           itemValue = getPriorityLabel(item.priority);
@@ -320,18 +297,19 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-slate-800">Todas as Demandas</CardTitle>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Buscar por protocolo, descrição, responsável..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
         </div>
       </CardHeader>
       <CardContent>
+        <div className="relative mb-3 w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar por protocolo, descrição, responsável, módulo, área"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 w-full"
+          />
+        </div>
+
         <div className="overflow-auto max-h-[600px]">
           <table className="w-full">
             <thead className="sticky top-0 bg-white z-10">
@@ -347,12 +325,8 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
                     />
                   </th>
                 )}
-                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
-                  Protocolo
-                </th>
-                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
-                  Data
-                </th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Protocolo</th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Data</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   <div className="flex items-center gap-2">
                     Sistema
@@ -385,9 +359,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
                     )}
                   </div>
                 </th>
-                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
-                  Solicitante
-                </th>
+                <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">Solicitante</th>
                 <th className="text-left py-3 px-2 text-sm font-medium text-slate-600">
                   <div className="flex items-center gap-2">
                     Cliente
@@ -442,7 +414,6 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
               ) : (
                 filteredItems.map((d: DemandListItem) => {
                   const hasBacklog = !!d.backlogId;
-
                   return (
                     <tr
                       key={d.id}
@@ -452,7 +423,7 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
                       {showCheckboxes && (
                         <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
                           {hasBacklog ? (
-                            <div className="flex items-center justify-center w-4 h-4 bg-gray-300 rounded opacity-50">
+                            <div className="flex items-center justify-center w-4 h-4 bg-gray-300 rounded opacity-50" title="Já vinculado a backlog">
                               <span className="text-xs text-gray-600">🔒</span>
                             </div>
                           ) : (
@@ -466,74 +437,46 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
                         </td>
                       )}
                       <td className="py-3 px-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-[#04A4A1]">{String(d.protocol)}</span>
-                        {d.backlogId && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded" title="Em backlog">
-                            📋 Backlog
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">{new Date(d.openedAt).toLocaleDateString("pt-BR")}</td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.systemVersion && typeof d.systemVersion === 'object' && d.systemVersion.version
-                        ? String(d.systemVersion.version)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.module && typeof d.module === 'object' && d.module.name
-                        ? String(d.module.name)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2">
-                      <Badge variant="secondary" className={getTypeColor(d.occurrenceType)}>
-                        {String(d.occurrenceType)}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.reporterArea && typeof d.reporterArea === 'object' && d.reporterArea.name
-                        ? String(d.reporterArea.name)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.requester && typeof d.requester === 'object' && d.requester.name
-                        ? String(d.requester.name)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.responsible && typeof d.responsible === 'string'
-                        ? String(d.responsible)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2 text-sm text-slate-600">
-                      {d.unit && typeof d.unit === 'object' && d.unit.name
-                        ? String(d.unit.name)
-                        : "—"}
-                    </td>
-                    <td className="py-3 px-2">
-                      <Badge className={getClassificationColor(d.classification)}>
-                        {String(d.classification)}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
-                      <PriorityCell
-                        demandId={d.id}
-                        currentPriority={d.priority ?? null}
-                        canEdit={canManageBacklogs ?? false}
-                      />
-                    </td>
-                    <td className="py-3 px-2">
-                      <Badge className={getStatusColor(d.status)}>{String(getStatusLabel(d.status))}</Badge>
-                    </td>
-                  </tr>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-[#04A4A1]">{String(d.protocol)}</span>
+                          {d.backlogId && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded cursor-default">Backlog</span>
+                              </TooltipTrigger>
+                              <TooltipContent sideOffset={6}>
+                                <span>{`Backlog: ${backlogNameById.get(d.backlogId) ?? "carregando..."}`}</span>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{new Date(d.openedAt).toLocaleDateString("pt-BR")}</td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.systemVersion?.version ?? ""}</td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.module?.name ?? ""}</td>
+                      <td className="py-3 px-2">
+                        <Badge variant="secondary" className={getTypeColor(d.occurrenceType)}>{String(d.occurrenceType)}</Badge>
+                      </td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.reporterArea?.name ?? ""}</td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.requester?.name ?? ""}</td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.responsible ?? ""}</td>
+                      <td className="py-3 px-2 text-sm text-slate-600">{d.unit?.name ?? ""}</td>
+                      <td className="py-3 px-2">
+                        <Badge className={getClassificationColor(d.classification)}>{String(d.classification)}</Badge>
+                      </td>
+                      <td className="py-3 px-2" onClick={(e) => e.stopPropagation()}>
+                        <PriorityCell demandId={d.id} currentPriority={d.priority ?? null} canEdit={canManageBacklogs} />
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge className={getStatusColor(d.status)}>{getStatusLabel(d.status)}</Badge>
+                      </td>
+                    </tr>
                   );
                 })
               )}
             </tbody>
           </table>
         </div>
-
         {!isLoading && filteredItems.length > 0 && (
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-slate-600">
