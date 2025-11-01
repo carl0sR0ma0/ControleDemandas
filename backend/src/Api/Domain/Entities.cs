@@ -181,3 +181,29 @@ public class Backlog
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<Demand> Demands { get; set; } = [];
 }
+
+
+public class Sprint
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    [MaxLength(160)] public string Name { get; set; } = default!;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public ICollection<SprintItem> Items { get; set; } = [];
+}
+
+public class SprintItem
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public Guid SprintId { get; set; }
+    public Sprint Sprint { get; set; } = default!;
+
+    public Guid DemandId { get; set; }
+    public Demand Demand { get; set; } = default!;
+
+    public double PlannedHours { get; set; }
+    public double WorkedHours { get; set; }
+}

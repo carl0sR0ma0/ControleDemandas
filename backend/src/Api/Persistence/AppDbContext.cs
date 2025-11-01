@@ -20,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SystemVersion> SystemVersions => Set<SystemVersion>();
     public DbSet<ModuleEntity> Modules => Set<ModuleEntity>();
     public DbSet<Backlog> Backlogs => Set<Backlog>();
+    public DbSet<Sprint> Sprints => Set<Sprint>();
+    public DbSet<SprintItem> SprintItems => Set<SprintItem>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -67,6 +69,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // Map Backlogs
         b.Entity<Backlog>().HasIndex(x => x.Name);
+
+        // Map Sprints
+        b.Entity<Sprint>().HasIndex(x => x.Name);
+        b.Entity<Sprint>().HasIndex(x => new { x.StartDate, x.EndDate });
+
+        b.Entity<SprintItem>().HasIndex(x => new { x.SprintId, x.DemandId }).IsUnique();
+        b.Entity<SprintItem>()
+            .HasOne(si => si.Sprint).WithMany(s => s.Items).HasForeignKey(si => si.SprintId)
+            .OnDelete(DeleteBehavior.Cascade);
+        b.Entity<SprintItem>()
+            .HasOne(si => si.Demand).WithMany().HasForeignKey(si => si.DemandId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Map Permissions
         b.Entity<PermissionEntity>().HasIndex(x => x.Code).IsUnique();

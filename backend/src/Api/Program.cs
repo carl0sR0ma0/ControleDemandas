@@ -7,6 +7,7 @@ using Api.Features.System;
 using Api.Features.Permissions;
 using Api.Features.Profiles;
 using Api.Features.Configs;
+using Api.Features.Sprints;
 using Api.Persistence;
 using Api.Security;
 using Api.Services;
@@ -221,5 +222,6 @@ app.MapInit();
 app.MapPermissionEndpoints();
 app.MapProfileEndpoints();
 app.MapFormConfigEndpoints();
+app.MapSprintEndpoints();
 
 app.Run();

@@ -32,9 +32,11 @@ export default function DemandsPage() {
     setIsBacklogModalOpen(true)
   }
 
-  const handleBacklogSelected = async (backlogId: string, backlogName: string) => {
+  const handleBacklogSelected = async (backlogId: string, backlogName: string, alreadyLinked?: boolean) => {
     try {
-      await addDemandsToBacklog(backlogId, selectedDemandIds)
+      if (!alreadyLinked) {
+        await addDemandsToBacklog(backlogId, selectedDemandIds)
+      }
 
       toast({
         title: "Demandas vinculadas",

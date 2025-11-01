@@ -30,7 +30,7 @@ interface ManageBacklogsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedDemandIds: string[];
-  onBacklogSelected: (backlogId: string, backlogName: string) => void;
+  onBacklogSelected: (backlogId: string, backlogName: string, alreadyLinked?: boolean) => void;
 }
 
 export function ManageBacklogsModal({
@@ -71,11 +71,19 @@ export function ManageBacklogsModal({
   };
 
   const onSubmit = async (data: CreateBacklogForm) => {
+    if (!selectedDemandIds || selectedDemandIds.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Seleção vazia",
+        description: "Selecione ao menos uma demanda para criar o backlog.",
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const result = await createBacklog({
         name: data.name,
-        demandIds: [],
+        demandIds: selectedDemandIds,
       });
 
       toast({
@@ -84,6 +92,7 @@ export function ManageBacklogsModal({
       });
 
       queryClient.invalidateQueries({ queryKey: ["backlogs"] });
+      onBacklogSelected(result.id, data.name, true);
 
       reset();
       setIsCreating(false);
@@ -100,7 +109,7 @@ export function ManageBacklogsModal({
   };
 
   const handleSelectBacklog = (backlogId: string, backlogName: string) => {
-    onBacklogSelected(backlogId, backlogName);
+    onBacklogSelected(backlogId, backlogName, false);
   };
 
   return (
@@ -155,7 +164,7 @@ export function ManageBacklogsModal({
               <Button
                 type="submit"
                 className="bg-[#04A4A1] hover:bg-[#038a87] cursor-pointer"
-                disabled={isSubmitting}
+                disabled={isSubmitting || selectedDemandIds.length === 0}
               >
                 {isSubmitting ? "Criando..." : "Criar Backlog"}
               </Button>
@@ -221,3 +230,4 @@ export function ManageBacklogsModal({
     </Dialog>
   );
 }
+

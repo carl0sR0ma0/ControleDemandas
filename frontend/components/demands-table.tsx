@@ -39,6 +39,10 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
 
     // Verificar se a demanda já está em um backlog
     const demand = items.find(d => d.id === demandId);
+    // Regra: não permitir selecionar demandas sem prioridade definida
+    if (demand && (demand.priority === null || demand.priority === undefined)) {
+      return;
+    }
     if (demand?.backlogId) {
       return; // Não permitir selecionar demandas que já estão em backlog
     }
@@ -55,7 +59,9 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
 
     // Filtrar demandas que não estão em backlog
     const selectableItems = items.filter(d => !d.backlogId);
-    const selectableIds = selectableItems.map(d => d.id);
+    const selectableIds = selectableItems
+      .filter(d => d.priority !== null && d.priority !== undefined)
+      .map(d => d.id);
 
     if (selectedDemands.length === selectableIds.length && selectableIds.length > 0) {
       onSelectionChange([]);
@@ -452,7 +458,9 @@ export function DemandsTable({ selectedDemands = [], onSelectionChange }: Demand
                           ) : (
                             <Checkbox
                               checked={selectedDemands.includes(d.id)}
+                              disabled={d.priority === null || d.priority === undefined}
                               onCheckedChange={() => handleSelectDemand(d.id)}
+                              title={(d.priority === null || d.priority === undefined) ? "Defina prioridade para selecionar" : undefined}
                             />
                           )}
                         </td>
