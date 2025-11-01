@@ -1,5 +1,6 @@
 using Api.Domain;
 using Api.Persistence;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,9 @@ public static class SprintEndpoints
             .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
 
         group.MapPatch("/items/{itemId:guid}/status", UpdateSprintItemStatus)
+            .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
+
+        group.MapGet("/available-backlogs", ListAvailableBacklogs)
             .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
     }
 
@@ -78,7 +82,14 @@ public static class SprintEndpoints
                         i.Demand.Protocol,
                         i.Demand.Description,
                         i.Demand.Priority,
-                        i.Demand.Status
+                        i.Demand.Status,
+                        backlog = i.Demand.Backlog == null
+                            ? null
+                            : new
+                            {
+                                i.Demand.Backlog.Id,
+                                i.Demand.Backlog.Name
+                            }
                     }
                 }).ToList()
             })
@@ -90,6 +101,8 @@ public static class SprintEndpoints
 
     public record SprintItemDto(Guid DemandId, double PlannedHours, double WorkedHours);
     public record UpsertSprintDto(Guid? Id, string Name, DateTime StartDate, DateTime EndDate, List<SprintItemDto>? Items);
+    public record SprintAvailableBacklogDemandDto(Guid Id, string Protocol, string Description, int? Priority, string Status);
+    public record SprintAvailableBacklogDto(Guid Id, string Name, List<SprintAvailableBacklogDemandDto> Demands);
 
     private static async Task<IResult> UpsertSprint([FromBody] UpsertSprintDto dto, AppDbContext db)
     {
@@ -202,6 +215,45 @@ public static class SprintEndpoints
         await db.SaveChangesAsync();
 
         return Results.Ok(new { id = item.Id, status = item.Status });
+    }
+
+    private static async Task<IResult> ListAvailableBacklogs(AppDbContext db)
+    {
+        var demands = await db.Demands
+            .AsNoTracking()
+            .Where(d => d.BacklogId != null)
+            .Where(d => !db.SprintItems.Any(si => si.DemandId == d.Id))
+            .Select(d => new
+            {
+                d.Id,
+                d.Protocol,
+                d.Description,
+                d.Priority,
+                Status = d.Status,
+                BacklogId = d.BacklogId!.Value,
+                BacklogName = d.Backlog!.Name
+            })
+            .ToListAsync();
+
+        var grouped = demands
+            .GroupBy(d => new { d.BacklogId, d.BacklogName })
+            .Select(g => new SprintAvailableBacklogDto(
+                g.Key.BacklogId,
+                g.Key.BacklogName,
+                g.Select(d => new SprintAvailableBacklogDemandDto(
+                    d.Id,
+                    d.Protocol,
+                    d.Description,
+                    d.Priority,
+                    d.Status.ToString()
+                ))
+                .OrderBy(x => x.Protocol)
+                .ToList()
+            ))
+            .OrderBy(b => b.Name)
+            .ToList();
+
+        return Results.Ok(new { data = grouped });
     }
 
     private static double CalcPercent(ICollection<Api.Domain.SprintItem> items)

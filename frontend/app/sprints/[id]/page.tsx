@@ -13,6 +13,7 @@ import {
   SprintDetail,
   SprintItem,
   SprintItemStatus,
+  SprintStatus,
 } from "@/lib/api-sprints";
 import { toast } from "sonner";
 import {
@@ -35,6 +36,43 @@ const columns = [
   { id: SprintItemStatus.InProgress, title: "Doing", color: "bg-yellow-100" },
   { id: SprintItemStatus.Done, title: "Done", color: "bg-green-100" },
 ];
+
+const normalizeSprintStatus = (status: unknown): SprintStatus => {
+  if (typeof status === "number") return status as SprintStatus;
+  if (typeof status === "string") {
+    const enumMatch = (SprintStatus as unknown as Record<string, number | string>)[status];
+    if (typeof enumMatch === "number") return enumMatch as SprintStatus;
+    const numeric = Number(status);
+    if (!Number.isNaN(numeric)) return numeric as SprintStatus;
+  }
+  return SprintStatus.NotStarted;
+};
+
+const normalizeItemStatus = (status: unknown): SprintItemStatus => {
+  if (typeof status === "number") return status as SprintItemStatus;
+  if (typeof status === "string") {
+    const enumMatch = (SprintItemStatus as unknown as Record<string, number | string>)[status];
+    if (typeof enumMatch === "number") return enumMatch as SprintItemStatus;
+    const numeric = Number(status);
+    if (!Number.isNaN(numeric)) return numeric as SprintItemStatus;
+  }
+  return SprintItemStatus.Backlog;
+};
+
+const sprintStatusLabel = (status: SprintStatus) => {
+  switch (status) {
+    case SprintStatus.NotStarted:
+      return "Nao iniciada";
+    case SprintStatus.InProgress:
+      return "Em andamento";
+    case SprintStatus.Paused:
+      return "Pausada";
+    case SprintStatus.Completed:
+      return "Concluida";
+    default:
+      return "Sem status";
+  }
+};
 
 const priorityColors: Record<number, string> = {
   1: "bg-red-100 text-red-700",
@@ -75,7 +113,12 @@ export default function SprintDetailPage() {
     try {
       setLoading(true);
       const data = await getSprint(sprintId);
-      setSprint(data);
+      const normalizedStatus = normalizeSprintStatus(data.status);
+      const normalizedItems = data.items.map((item) => ({
+        ...item,
+        status: normalizeItemStatus(item.status),
+      }));
+      setSprint({ ...data, status: normalizedStatus, items: normalizedItems });
     } catch (error) {
       toast.error("Erro ao carregar sprint");
       router.push("/sprints");
@@ -102,7 +145,7 @@ export default function SprintDetailPage() {
     if (!over || !sprint) return;
 
     const itemId = active.id as string;
-    const newStatus = over.id as SprintItemStatus;
+    const newStatus = normalizeItemStatus(over.id);
 
     const item = sprint.items.find((i) => i.id === itemId);
     if (!item || item.status === newStatus) return;
@@ -129,8 +172,8 @@ export default function SprintDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-8 max-w-7xl mx-auto">
-        <p className="text-center text-slate-500">Carregando sprint...</p>
+      <div className="p-6">
+        <p className="text-slate-500">Carregando sprint...</p>
       </div>
     );
   }
@@ -140,48 +183,50 @@ export default function SprintDetailPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/sprints")}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para Sprints
-        </Button>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">{sprint.name}</h1>
-            <p className="text-slate-600 mt-1">
-              {new Date(sprint.startDate).toLocaleDateString("pt-BR")} -{" "}
-              {new Date(sprint.endDate).toLocaleDateString("pt-BR")}
-            </p>
+    <div className="flex flex-col">
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
+        <div className="px-6 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" onClick={() => router.push("/sprints")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar para Sprints
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800">{sprint.name}</h1>
+              <p className="text-slate-600">
+                {new Date(sprint.startDate).toLocaleDateString("pt-BR")} -{" "}
+                {new Date(sprint.endDate).toLocaleDateString("pt-BR")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline" className="border-slate-200 text-slate-600">
+              Itens: {sprint.items.length}
+            </Badge>
+            <Badge variant="outline" className="border-slate-200 text-slate-600">
+              {sprintStatusLabel(sprint.status)}
+            </Badge>
           </div>
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              items={getItemsByColumn(column.id)}
-            />
-          ))}
-        </div>
+      <div className="p-6">
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {columns.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                items={getItemsByColumn(column.id)}
+              />
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeItem && activeItem.demand && (
-            <DemandCard item={activeItem} isDragging />
-          )}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeItem && activeItem.demand && <DemandCard item={activeItem} isDragging />}
+          </DragOverlay>
+        </DndContext>
+      </div>
     </div>
   );
 }
@@ -247,34 +292,38 @@ function DemandCard({
   if (!item.demand) return null;
 
   return (
-    <Card
+    <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      className={`p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow ${
-        isDragging ? "opacity-50 rotate-3" : ""
-      }`}
+      className="cursor-grab active:cursor-grabbing"
     >
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <span className="font-mono text-xs text-slate-500">
-            {item.demand.protocol}
-          </span>
-          {item.demand.priority && (
-            <Badge className={priorityColors[item.demand.priority]}>
-              {priorityLabels[item.demand.priority]}
-            </Badge>
-          )}
+      <Card
+        className={`p-3 hover:shadow-md transition-shadow ${
+          isDragging ? "opacity-50 rotate-3" : ""
+        }`}
+      >
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-mono text-xs text-slate-500">
+              {item.demand.protocol}
+            </span>
+            {item.demand.priority && (
+              <Badge className={priorityColors[item.demand.priority]}>
+                {priorityLabels[item.demand.priority]}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm font-medium text-slate-700 line-clamp-2">
+            {item.demand.description}
+          </p>
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>{item.plannedHours}h planejadas</span>
+            <span>{item.workedHours}h trabalhadas</span>
+          </div>
         </div>
-        <p className="text-sm font-medium text-slate-700 line-clamp-2">
-          {item.demand.description}
-        </p>
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>{item.plannedHours}h planejadas</span>
-          <span>{item.workedHours}h trabalhadas</span>
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }

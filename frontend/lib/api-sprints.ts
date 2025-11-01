@@ -47,6 +47,20 @@ export type SprintDetail = {
   items: SprintItem[];
 };
 
+export type SprintAvailableBacklogDemand = {
+  id: string;
+  protocol: string;
+  description: string;
+  priority: number | null;
+  status: string;
+};
+
+export type SprintAvailableBacklog = {
+  id: string;
+  name: string;
+  demands: SprintAvailableBacklogDemand[];
+};
+
 export async function listSprints() {
   const res = await http.get<{ data: SprintSummary[] }>(`/sprints`);
   return res.data.data;
@@ -94,3 +108,7 @@ export async function updateSprintItemStatus(itemId: string, status: SprintItemS
   return res.data;
 }
 
+export async function listAvailableSprintBacklogs() {
+  const res = await http.get<{ data: SprintAvailableBacklog[] }>(`/sprints/available-backlogs`);
+  return res.data.data;
+}

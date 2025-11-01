@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Play, Pause, CheckCircle, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Play, Pause, CheckCircle, Trash2, Pencil } from "lucide-react";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import {
   listSprints,
@@ -38,10 +38,22 @@ const PERMS = {
 };
 
 const statusLabels: Record<SprintStatus, { label: string; color: string }> = {
-  [SprintStatus.NotStarted]: { label: "Não iniciada", color: "bg-gray-100 text-gray-700" },
+  [SprintStatus.NotStarted]: { label: "Nao iniciada", color: "bg-gray-100 text-gray-700" },
   [SprintStatus.InProgress]: { label: "Em andamento", color: "bg-blue-100 text-blue-700" },
   [SprintStatus.Paused]: { label: "Pausada", color: "bg-yellow-100 text-yellow-700" },
-  [SprintStatus.Completed]: { label: "Concluída", color: "bg-green-100 text-green-700" },
+  [SprintStatus.Completed]: { label: "Concluida", color: "bg-green-100 text-green-700" },
+};
+const fallbackStatusLabel = { label: "Sem status", color: "bg-slate-100 text-slate-600" };
+
+const resolveSprintStatus = (status: unknown): SprintStatus | undefined => {
+  if (typeof status === "number") return status as SprintStatus;
+  if (typeof status === "string") {
+    const numeric = Number(status);
+    if (!Number.isNaN(numeric)) return numeric as SprintStatus;
+    const mapped = (SprintStatus as Record<string, number | string>)[status];
+    if (typeof mapped === "number") return mapped as SprintStatus;
+  }
+  return undefined;
 };
 
 export default function SprintsPage() {
@@ -51,6 +63,7 @@ export default function SprintsPage() {
   const [sprints, setSprints] = useState<SprintSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [shouldReloadAfterModal, setShouldReloadAfterModal] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | undefined>();
 
   const loadSprints = async () => {
@@ -74,16 +87,11 @@ export default function SprintsPage() {
     setModalOpen(true);
   };
 
-  const handleEditSprint = (id: string) => {
-    setEditingSprintId(id);
-    setModalOpen(true);
-  };
-
   const handleDeleteSprint = async (id: string) => {
     if (!confirm("Deseja realmente excluir esta sprint?")) return;
     try {
       await removeSprint(id);
-      toast.success("Sprint excluída com sucesso");
+      toast.success("Sprint excluida com sucesso");
       loadSprints();
     } catch (error) {
       toast.error("Erro ao excluir sprint");
@@ -101,18 +109,36 @@ export default function SprintsPage() {
   };
 
   const handleSprintClick = (sprint: SprintSummary) => {
-    if (sprint.status === SprintStatus.InProgress) {
-      router.push(`/sprints/${sprint.id}`);
+    router.push(`/sprints/${sprint.id}`);
+  };
+
+  const handleEditSprint = (id: string) => {
+    setEditingSprintId(id);
+    setModalOpen(true);
+  };
+
+  const handleModalOpenChange = (open: boolean) => {
+    setModalOpen(open);
+    if (!open) {
+      setEditingSprintId(undefined);
+      setShouldReloadAfterModal(true);
     }
   };
+
+  useEffect(() => {
+    if (!modalOpen && shouldReloadAfterModal) {
+      loadSprints();
+      setShouldReloadAfterModal(false);
+    }
+  }, [modalOpen, shouldReloadAfterModal]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("pt-BR");
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Sprints</h1>
           <p className="text-slate-600 mt-1">
@@ -125,131 +151,149 @@ export default function SprintsPage() {
         </Button>
       </div>
 
-      <Card className="p-6">
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-slate-500">Carregando sprints...</p>
-          </div>
-        ) : sprints.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-500 mb-4">Nenhuma sprint cadastrada</p>
-            <Button onClick={handleCreateSprint} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Criar primeira sprint
-            </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Progresso</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Fim</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sprints.map((sprint) => (
-                <TableRow
-                  key={sprint.id}
-                  className={
-                    sprint.status === SprintStatus.InProgress
-                      ? "cursor-pointer hover:bg-slate-50"
-                      : ""
-                  }
-                  onClick={() => handleSprintClick(sprint)}
-                >
-                  <TableCell className="font-medium">{sprint.name}</TableCell>
-                  <TableCell>
-                    <Badge className={statusLabels[sprint.status].color}>
-                      {statusLabels[sprint.status].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <SprintBadge percent={sprint.percent} />
-                  </TableCell>
-                  <TableCell>{formatDate(sprint.startDate)}</TableCell>
-                  <TableCell>{formatDate(sprint.endDate)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {sprint.status === SprintStatus.NotStarted && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleChangeStatus(sprint.id, SprintStatus.InProgress);
-                            }}
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Iniciar
-                          </DropdownMenuItem>
-                        )}
-                        {sprint.status === SprintStatus.InProgress && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleChangeStatus(sprint.id, SprintStatus.Paused);
-                              }}
-                            >
-                              <Pause className="h-4 w-4 mr-2" />
-                              Pausar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleChangeStatus(sprint.id, SprintStatus.Completed);
-                              }}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Concluir
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {sprint.status === SprintStatus.Paused && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleChangeStatus(sprint.id, SprintStatus.InProgress);
-                            }}
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Retomar
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSprint(sprint.id);
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-lg font-semibold text-slate-800">Todas as sprints</CardTitle>
+          {!loading && sprints.length > 0 && (
+            <span className="text-sm text-slate-500">
+              {sprints.length} sprint{sprints.length === 1 ? "" : "s"}
+            </span>
+          )}
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="py-12 text-center text-slate-500">Carregando sprints...</div>
+          ) : sprints.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-500 mb-4">Nenhuma sprint cadastrada</p>
+              <Button onClick={handleCreateSprint} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeira sprint
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Status da sprint</TableHead>
+                    <TableHead>Progresso</TableHead>
+                    <TableHead>Inicio</TableHead>
+                    <TableHead>Término</TableHead>
+                    <TableHead className="text-right">Acoes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sprints.map((sprint) => {
+                    const normalizedStatus = resolveSprintStatus(sprint.status);
+                    const statusInfo =
+                      (normalizedStatus !== undefined
+                        ? statusLabels[normalizedStatus]
+                        : undefined) ?? fallbackStatusLabel;
+                    return (
+                      <TableRow
+                        key={sprint.id}
+                        className="cursor-pointer hover:bg-slate-50"
+                        onClick={() => handleSprintClick(sprint)}
+                        onDoubleClick={() => handleSprintClick(sprint)}
+                      >
+                        <TableCell className="font-medium">{sprint.name}</TableCell>
+                        <TableCell>
+                          <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <SprintBadge percent={sprint.percent} />
+                        </TableCell>
+                        <TableCell>{formatDate(sprint.startDate)}</TableCell>
+                        <TableCell>{formatDate(sprint.endDate)}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditSprint(sprint.id);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              {sprint.status === SprintStatus.NotStarted && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleChangeStatus(sprint.id, SprintStatus.InProgress);
+                                  }}
+                                >
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Iniciar
+                                </DropdownMenuItem>
+                              )}
+                              {sprint.status === SprintStatus.InProgress && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleChangeStatus(sprint.id, SprintStatus.Paused);
+                                    }}
+                                  >
+                                    <Pause className="h-4 w-4 mr-2" />
+                                    Pausar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleChangeStatus(sprint.id, SprintStatus.Completed);
+                                    }}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Concluir
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {sprint.status === SprintStatus.Paused && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleChangeStatus(sprint.id, SprintStatus.InProgress);
+                                  }}
+                                >
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Retomar
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSprint(sprint.id);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       <SprintModal
         open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) loadSprints();
-        }}
+        onOpenChange={handleModalOpenChange}
         sprintId={editingSprintId}
       />
     </div>
