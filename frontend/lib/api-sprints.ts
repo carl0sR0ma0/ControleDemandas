@@ -34,7 +34,11 @@ export type SprintItem = {
     protocol: string;
     description: string;
     priority: number | null;
-    status: number;
+    status: number | string;
+    backlog?: {
+      id: string;
+      name: string;
+    } | null;
   };
 };
 
@@ -85,6 +89,10 @@ export async function saveSprint(payload: {
     endDate: payload.endDate,
     items: payload.items,
   };
+  if (payload.id) {
+    const res = await http.put<{ id: string }>(`/sprints/${payload.id}`, body);
+    return res.data;
+  }
   const res = await http.post<{ id: string }>(`/sprints`, body);
   return res.data;
 }

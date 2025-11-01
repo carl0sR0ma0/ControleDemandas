@@ -18,7 +18,11 @@ public static class SprintEndpoints
         group.MapGet("/{id:guid}", GetSprint)
             .RequireAuthorization($"PERM:{nameof(Permission.VisualizarDemandas)}");
 
-        group.MapPost("/", UpsertSprint)
+        group.MapPost("/", (UpsertSprintDto dto, AppDbContext db) => UpsertSprint(dto, db))
+            .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
+
+        group.MapPut("/{id:guid}", (Guid id, UpsertSprintDto dto, AppDbContext db) =>
+            UpsertSprint(dto with { Id = id }, db))
             .RequireAuthorization($"PERM:{nameof(Permission.GerenciarBacklogs)}");
 
         group.MapDelete("/{id:guid}", DeleteSprint)
@@ -119,8 +123,10 @@ public static class SprintEndpoints
         if (existsCount != demandIds.Count)
             return Results.BadRequest(new { error = "Uma ou mais demandas nao existem" });
 
+        var isNew = dto.Id is null || dto.Id == Guid.Empty;
         Api.Domain.Sprint sprint;
-        if (dto.Id is null || dto.Id == Guid.Empty)
+
+        if (isNew)
         {
             sprint = new Api.Domain.Sprint
             {
@@ -132,30 +138,45 @@ public static class SprintEndpoints
         }
         else
         {
-            sprint = await db.Sprints.Include(s => s.Items).FirstOrDefaultAsync(s => s.Id == dto.Id.Value)
-                     ?? new Api.Domain.Sprint { Id = dto.Id.Value };
+            sprint = await db.Sprints
+                .FirstOrDefaultAsync(s => s.Id == dto.Id!.Value);
 
-            if (sprint.Id == dto.Id.Value && db.Entry(sprint).State == EntityState.Detached)
-                db.Sprints.Add(sprint);
+            if (sprint is null)
+            {
+                return Results.NotFound(new { error = "Sprint nao encontrada" });
+            }
 
             sprint.Name = dto.Name;
             sprint.StartDate = dto.StartDate;
             sprint.EndDate = dto.EndDate;
 
-            if (db.Entry(sprint).State != EntityState.Added)
-            {
-                await db.Entry(sprint).Collection(s => s.Items).LoadAsync();
-                db.SprintItems.RemoveRange(sprint.Items);
-            }
+            // Remove itens atuais em lote para evitar conflitos de concorrencia otimista
+            await db.SprintItems
+                .Where(si => si.SprintId == sprint.Id)
+                .ExecuteDeleteAsync();
         }
 
-        sprint.Items = items.Select(i => new Api.Domain.SprintItem
+        var newItems = items.Select(i => new Api.Domain.SprintItem
         {
             SprintId = sprint.Id,
             DemandId = i.DemandId,
             PlannedHours = i.PlannedHours,
             WorkedHours = i.WorkedHours
         }).ToList();
+
+        if (isNew)
+        {
+            sprint.Items = newItems;
+        }
+        else
+        {
+            sprint.Items = newItems;
+
+            if (newItems.Count > 0)
+            {
+                await db.SprintItems.AddRangeAsync(newItems);
+            }
+        }
 
         await db.SaveChangesAsync();
         return Results.Ok(new { id = sprint.Id });

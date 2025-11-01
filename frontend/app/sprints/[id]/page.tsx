@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { ArrowLeft, Columns3, LineChart as LineChartIcon } from "lucide-react";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import {
   getSprint,
+  getBurndown,
   updateSprintItemStatus,
   SprintDetail,
   SprintItem,
@@ -25,6 +35,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { LineChart as RechartsLineChart, Line, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const PERMS = {
   VisualizarDemandas: 2,
@@ -100,6 +111,14 @@ export default function SprintDetailPage() {
   const [sprint, setSprint] = useState<SprintDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeItem, setActiveItem] = useState<SprintItem | null>(null);
+  const [activeTab, setActiveTab] = useState<"kanban" | "dashboard">("kanban");
+  const [burndown, setBurndown] = useState<Array<{ date: string; planned: number; remaining: number }>>([]);
+  const [loadingBurndown, setLoadingBurndown] = useState(true);
+  const [burndownError, setBurndownError] = useState<string | null>(null);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value === "dashboard" ? "dashboard" : "kanban");
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -127,8 +146,25 @@ export default function SprintDetailPage() {
     }
   };
 
+  const loadBurndown = async () => {
+    try {
+      setLoadingBurndown(true);
+      setBurndownError(null);
+      const data = await getBurndown(sprintId);
+      setBurndown(data);
+    } catch (error) {
+      setBurndownError("Erro ao carregar burndown");
+    } finally {
+      setLoadingBurndown(false);
+    }
+  };
+
   useEffect(() => {
     loadSprint();
+  }, [sprintId]);
+
+  useEffect(() => {
+    loadBurndown();
   }, [sprintId]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -170,6 +206,26 @@ export default function SprintDetailPage() {
     return sprint?.items.filter((item) => item.status === columnId) || [];
   };
 
+  const burndownChartData = useMemo(
+    () =>
+      burndown.map((point) => ({
+        label: new Date(point.date).toLocaleDateString("pt-BR"),
+        planned: Number(point.planned ?? 0),
+        remaining: Number(point.remaining ?? 0),
+      })),
+    [burndown]
+  );
+
+  const burndownChartConfig = useMemo<ChartConfig>(
+    () => ({
+      planned: { label: "Planejado", color: "#f97316" },
+      remaining: { label: "Restante", color: "#007d66" },
+    }),
+    []
+  );
+
+  const hasBurndownData = burndownChartData.length > 0;
+
   if (loading) {
     return (
       <div className="p-6">
@@ -183,8 +239,8 @@ export default function SprintDetailPage() {
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div className="flex min-h-full flex-col">
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="px-6 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" onClick={() => router.push("/sprints")}>
@@ -210,23 +266,79 @@ export default function SprintDetailPage() {
         </div>
       </div>
 
-      <div className="p-6">
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                items={getItemsByColumn(column.id)}
-              />
-            ))}
-          </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="flex flex-1 flex-col"
+      >
+        <div className="px-6 pt-4">
+          <TabsList>
+            <TabsTrigger value="kanban" className="gap-2">
+              <Columns3 className="h-4 w-4" />
+              Kanban
+            </TabsTrigger>
+            <TabsTrigger value="dashboard" className="gap-2">
+              <LineChartIcon className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          <DragOverlay>
-            {activeItem && activeItem.demand && <DemandCard item={activeItem} isDragging />}
-          </DragOverlay>
-        </DndContext>
-      </div>
+        <TabsContent value="kanban" className="px-6 pb-6">
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {columns.map((column) => (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  items={getItemsByColumn(column.id)}
+                />
+              ))}
+            </div>
+
+            <DragOverlay>
+              {activeItem && activeItem.demand && <DemandCard item={activeItem} isDragging />}
+            </DragOverlay>
+          </DndContext>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="px-6 pb-6">
+          {loadingBurndown ? (
+            <p className="text-slate-500">Carregando burndown...</p>
+          ) : burndownError ? (
+            <p className="text-sm text-red-600">{burndownError}</p>
+          ) : hasBurndownData ? (
+            <ChartContainer
+              config={burndownChartConfig}
+              className="h-[360px] w-full"
+            >
+              <RechartsLineChart data={burndownChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="planned"
+                  stroke="var(--color-planned)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="remaining"
+                  stroke="var(--color-remaining)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </RechartsLineChart>
+            </ChartContainer>
+          ) : (
+            <p className="text-slate-500">Sem dados de burndown para esta sprint.</p>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
